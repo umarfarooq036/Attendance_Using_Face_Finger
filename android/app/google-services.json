@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "267165084814",
+    "project_id": "pbi-time-management",
+    "storage_bucket": "pbi-time-management.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:267165084814:android:def9846530d48935cb2ddf",
+        "android_client_info": {
+          "package_name": "com.pbi.pbi_time"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBY5LlrZx_JRaOKGmgeVwirfh0DvTOP_Ak"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
