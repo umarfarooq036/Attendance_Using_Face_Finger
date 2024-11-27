@@ -1268,8 +1268,8 @@ public class MainActivity extends FlutterFragmentActivity {
         methodChannel.setMethodCallHandler((call, result) -> {
             switch (call.method) {
                 case "startCapture":
-                    startCapture();
-                    result.success("Capture started");
+                    boolean response = startCapture();
+                    result.success(response);
                     break;
                 case "stopCapture":
                     stopCapture();
@@ -1718,22 +1718,24 @@ public class MainActivity extends FlutterFragmentActivity {
     // ... (keeping all other existing methods unchanged)
 
 
-        private void startCapture() {
+        private boolean startCapture() {
         if (bStarted) {
             showToast("Capture already started");
-            return;
+            return false;
         }
         if (!enumSensor()) {
             showToast("Device not found!");
-            return;
+            return false;
         }
 
         UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
         if (usbManager.hasPermission(usbDevice)) {
             openDevice();
+            return true;
         } else {
             PendingIntent permissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(USB_PERMISSION_ACTION), PendingIntent.FLAG_IMMUTABLE);
             usbManager.requestPermission(usbDevice, permissionIntent);
+            return false;
         }
     }
 
@@ -1748,12 +1750,13 @@ public class MainActivity extends FlutterFragmentActivity {
 
         private void openDevice() {
         createFingerprintSensor();
+        loadAllTemplatesFromDB();
         bRegister = false;
         enroll_index = 0;
         isReseted = false;
         try {
             fingerprintSensor.open(deviceIndex);
-            loadAllTemplatesFromDB();
+//            loadAllTemplatesFromDB();
             fingerprintSensor.setFingerprintCaptureListener(deviceIndex, fingerprintCaptureListener);
             fingerprintSensor.SetFingerprintExceptionListener(fingerprintExceptionListener);
             fingerprintSensor.startCapture(deviceIndex);

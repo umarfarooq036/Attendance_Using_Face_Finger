@@ -901,10 +901,17 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
 
   Future<void> _startCapture() async {
     try {
-      final String result = await platform.invokeMethod('startCapture');
-      setState(() {
-        _statusMessage = result;
-      });
+      final result = await platform.invokeMethod('startCapture');
+      if (result) {
+        setState(() {
+          _statusMessage = 'Capture Started!';
+        });
+      }
+      else {
+        setState(() {
+          _statusMessage = 'Please Start Capture Again!';
+        });
+      }
     } catch (e) {
       _showErrorSnackBar('Start capture failed: $e');
     }
@@ -1018,7 +1025,7 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
       if (empId == null) {
         return _showErrorSnackBar('Employee ID not found!');
       }
-      final response = await _markAttendance.markAttendance(empId , 'Finger');
+      final response = await _markAttendance.markAttendance(empId, 'Finger');
 
       if (response != null) {
         _showSuccessSnackBar(response);
@@ -1027,7 +1034,7 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
 
       // setState(() {
       //   _statusMessage = result;
-      // });
+      // });fstar
     } catch (e) {
       _showErrorSnackBar('Identification failed: $e');
     }
