@@ -1,10 +1,13 @@
 // lib/services/fingerprint_api_service.dart
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart';
 import 'dart:convert';
 
 import 'package:pbi_time/constants.dart';
+import 'package:pbi_time/utils/snackBar.dart';
 
 class ApiResponse<T> {
   final T? data;
@@ -26,7 +29,7 @@ class ApiResponse<T> {
   }
 }
 
-class FingerprintApiService {
+class FingerFaceApiService {
   static const String baseUrl = baseURL;
   static const Map<String, String> headers = {
     'Content-Type': 'application/json',
@@ -35,7 +38,7 @@ class FingerprintApiService {
 
   final http.Client _client;
 
-  FingerprintApiService({http.Client? client})
+  FingerFaceApiService({http.Client? client})
       : _client = client ?? http.Client();
 
   // Future<ApiResponse<Map<String, dynamic>>> _handleResponse(
@@ -63,11 +66,12 @@ class FingerprintApiService {
   //   }
   // }
 
-  Future<ApiResponse<dynamic>> canAddFingerprint(String id) async {
+  Future<ApiResponse<dynamic>> canAddFingerprint(String id,
+      {String type = 'finger'}) async {
     // dynamic apiResponse;
     try {
       final response = await _client.get(
-        Uri.parse('$baseUrl/EmployeeManagement/CanAddFinger?EmployeeId=$id'),
+        Uri.parse('$baseUrl/EmployeeManagement/${type == 'face' ? 'CanAddFace' : 'CanAddFinger'}?EmployeeId=$id'),
         headers: headers,
       );
 
@@ -93,7 +97,8 @@ class FingerprintApiService {
 
   Future<Map<String, dynamic>> registerUser({
     required String employeeId,
-    required String fingerprintData, required List<String> images,
+    required String fingerprintData,
+    required List<String> images,
   }) async {
     try {
       final response = await _client.post(
@@ -102,7 +107,32 @@ class FingerprintApiService {
         body: json.encode({
           'employeeId': employeeId,
           'fingers': fingerprintData,
-          'images':images
+          'images': images
+        }),
+      );
+
+      // return await _handleResponse(response);
+      return await json.decode(response.body);
+    } catch (e) {
+      return {
+        "isSuccess": false,
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> registerUserFace({
+    required String employeeId,
+    required String faceId,
+    required images,
+  }) async {
+    try {
+      final response = await _client.post(
+        Uri.parse('$baseUrl/EmployeeManagement/AddFaces'),
+        headers: headers,
+        body: json.encode({
+          'employeeId': employeeId,
+          'faces': faceId,
+          'images': images
         }),
       );
 
@@ -179,15 +209,15 @@ class FingerprintApiService {
   //   }
   // }
 
-  Future<int?> getEmployeeId(String employeeCode) async {
+  Future<int?> getEmployeeId(BuildContext context , String employeeCode) async {
     try {
       final response = await _client.get(
-        Uri.parse('$baseUrl/EmployeeManagement/GetEmployeeId?EmployeeCode=$employeeCode'),
+        Uri.parse(
+            '$baseUrl/EmployeeManagement/GetEmployeeId?EmployeeCode=$employeeCode'),
         headers: headers,
       );
 
-      if (response.statusCode >= 200 &&
-          response.statusCode < 300) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         // Decode the response body
         final data = json.decode(response.body);
 
@@ -201,10 +231,14 @@ class FingerprintApiService {
             throw Exception("Invalid employeeId format in the response");
           }
         } else {
+          SnackbarHelper.showSnackBar(
+              context, data['errorMessage']);
           throw Exception(
               data?['errorMessage'] ?? "Failed to fetch employee ID");
         }
       } else {
+        SnackbarHelper.showSnackBar(
+            context, "HTTP error: ${response.statusCode}");
         throw Exception("HTTP error: ${response.statusCode}");
       }
     } catch (e) {

@@ -38,13 +38,16 @@ class MarkAttendanceService {
   MarkAttendanceService({http.Client? client})
       : _client = client ?? http.Client();
 
-  Future<String?> markAttendance(String empId) async {
+  Future<String?> markAttendance(String empId, String type,
+      {String? image = ''}) async {
     await _initializeLocation();
     try {
       String? deviceToken = await SharedPrefsHelper.getDeviceToken();
       String? data = await SharedPrefsHelper.getLocationData();
       double? lat = await SharedPrefsHelper.getLatitude();
       double? long = await SharedPrefsHelper.getLongitude();
+
+      // empId =  SharedPrefsHelper.getEmployeeId().toString();
 
       var locationId;
 
@@ -76,11 +79,13 @@ class MarkAttendanceService {
         Uri.parse('$baseUrl/api/MarkAttendence/MarkAttendence'),
         headers: headers,
         body: json.encode({
+          "type": type,
           "employeeId": empId,
           "locationId": locationId,
           "lat": lat,
           "long": long,
           "deviceToken": deviceToken ?? '', // Ensure deviceToken is not null
+          "image": image
         }),
       );
 

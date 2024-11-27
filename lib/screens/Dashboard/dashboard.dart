@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:pbi_time/screens/Mannual%20Registration/mannual_registration.dart';
 import 'package:pbi_time/screens/face_recognition/face_authentication_screen.dart';
 import 'package:pbi_time/services/device_registration_service.dart';
 import 'package:pbi_time/utils/sharedPreferencesHelper.dart';
@@ -285,33 +286,62 @@ class _DashboardState extends State<Dashboard> {
                                 },
                               ),
                         SizedBox(height: 20),
-                        _buildActionButton(
-                          context,
-                          text: 'Register',
-                          onPressed: _registerOfficeDevice,
-                          color: Color(0xFF17a2b8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildActionButton(
+                              context,
+                              text: 'Register Device',
+                              onPressed: _registerOfficeDevice,
+                              color: Color(0xFF17a2b8),
+                              icon: Icon(Icons.app_registration),
+                            ),
+                            _buildActionButton(
+                              context,
+                              text: 'Manual Attendance',
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                    context, ManualAttendanceScreen.routeName);
+                              },
+                              color: Color(0xFF17a2b8),
+                              icon: Icon(Icons.assignment_ind), // Icon for manual attendance
+                            ),
+                          ],
                         ),
+
                         SizedBox(height: 15),
-                        _buildActionButton(
-                          context,
-                          text: 'Face Recognition',
-                          onPressed: () {
-                            // Navigate to Face Recognition
-                            Navigator.pushNamed(
-                                context, FaceRecognitionScreen.routeName);
-                          },
-                          color: Color(0xFF17a2b8),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildActionButton(
+                              context,
+                              text: 'Face Recognition',
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                    context, FaceRecognitionScreen.routeName);
+                              },
+                              color: Color(0xFF17a2b8),
+                              icon: Icon(Icons.face), // Icon for face recognition
+                            ),
+                            _buildActionButton(
+                              context,
+                              text: 'Finger Recognition',
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                    context, FingerprintScannerScreen.routeName);
+                              },
+                              color: Color(0xFF17a2b8),
+                              icon: Icon(Icons.fingerprint), // Icon for fingerprint recognition
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 15),
-                        _buildActionButton(
-                          context,
-                          text: 'Finger Recognition',
-                          onPressed: () {
-                            Navigator.pushNamed(
-                                context, FingerprintScannerScreen.routeName);
-                          },
-                          color: Color(0xFF17a2b8),
-                        ),
+
+
+                        // SizedBox(height: 15),
+                        //
+                        // SizedBox(height: 15),
+
                       ],
                     ),
                   ),
@@ -325,26 +355,43 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Widget _buildActionButton(
-    BuildContext context, {
-    required String text,
-    required VoidCallback onPressed,
-    required Color color,
-  }) {
+      BuildContext context, {
+        required String text,
+        required VoidCallback onPressed,
+        required Color color,
+        required Icon icon,
+      }) {
+    double screenWidth = MediaQuery.of(context).size.width;
+
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
-        padding: EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+        padding: EdgeInsets.symmetric(
+          vertical: 15,
+          horizontal: screenWidth * 0.05, // Responsive padding
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(25),
         ),
         elevation: 5,
       ),
       onPressed: onPressed,
-      child: Text(
-        text,
-        style: TextStyle(
-            fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          icon,
+          SizedBox(width: screenWidth * 0.02), // Responsive spacing
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: screenWidth * 0.03, // Responsive font size
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
+
 }

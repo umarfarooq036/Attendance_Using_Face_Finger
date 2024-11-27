@@ -746,7 +746,7 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
   // Form and UI Controllers
   final _formKey = GlobalKey<FormState>();
   static const platform = MethodChannel('zkfingerprint_channel');
-  final FingerprintApiService _apiService = FingerprintApiService();
+  final FingerFaceApiService _apiService = FingerFaceApiService();
   final MarkAttendanceService _markAttendance = MarkAttendanceService();
 
   // State Variables
@@ -816,11 +816,21 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
             setState(() => _isLoading = true);
             try {
               final response = await _apiService.getUserList();
-              if (response.data["isSuccess"]) {
-                _showSuccessSnackBar(
-                  'User list retrieved successfully',
-                );
-              }
+              final isSuccess = response.data['isSuccess'];
+              isSuccess
+                  ? _showSuccessSnackBar(
+                      'User list retrieved successfully',
+                    )
+                  : _showErrorSnackBar(response.data['errorMessage'] ??
+                      'Unable to fetch users list!, Please start capture again.');
+              // if (response.data["isSuccess"]) {
+              //   _showSuccessSnackBar(
+              //     'User list retrieved successfully',
+              //   );
+              // }
+              // else{
+              //   _showErrorSnackBar(response.data[''])
+              // }
               return response.toMap();
             } finally {
               setState(() => _isLoading = false);
@@ -967,7 +977,7 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
       registerFlagForImageStatusMsg = true;
       // Retrieve employee ID
       final employeeCode = _empIdController.text.trim();
-      employeeId = await _apiService.getEmployeeId(employeeCode);
+      employeeId = await _apiService.getEmployeeId(context, employeeCode);
 
       if (employeeId == null) {
         _showErrorSnackBar('Could not retrieve employee ID');
@@ -1008,7 +1018,7 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
       if (empId == null) {
         return _showErrorSnackBar('Employee ID not found!');
       }
-      final response = await _markAttendance.markAttendance(empId);
+      final response = await _markAttendance.markAttendance(empId , 'Finger');
 
       if (response != null) {
         _showSuccessSnackBar(response);
@@ -1087,6 +1097,7 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Fingerprint Scanner'),
+        backgroundColor: const Color(0xFF17a2b8),
       ),
       body: SingleChildScrollView(
         child: Form(

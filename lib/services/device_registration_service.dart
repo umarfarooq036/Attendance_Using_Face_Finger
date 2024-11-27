@@ -51,8 +51,8 @@ class DeviceRegistrationService {
           Uri.parse('$baseUrl/api/DeviceManagement/RegisterOfficeDevice'),
           headers: headers,
           body: json.encode({
-            "deviceToken": '${deviceToken}9',
-            "deviceName": '${deviceName}7',
+            "deviceToken": deviceToken,
+            "deviceName": deviceName,
             "location": locationId
           }));
 
