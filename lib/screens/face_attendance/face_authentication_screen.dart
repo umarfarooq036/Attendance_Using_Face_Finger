@@ -980,6 +980,14 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
     _configureAWS();
   }
 
+  @override
+  void dispose() async {
+    // TODO: implement dispose
+    await SharedPrefsHelper.clearValue('employeeId');
+    log("Value clreareed");
+    super.dispose();
+  }
+
   // ================ AWS Configuration ================
   void _configureAWS() {
     final credentials = rekognition.AwsClientCredentials(
@@ -1014,6 +1022,7 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
 
   // ================ Image Handling ================
   Future<void> pickImage(String action) async {
+    // base64Images = [];
     final picker = ImagePicker();
     final image =
         await picker.pickImage(source: ImageSource.camera, imageQuality: 80);
@@ -1089,22 +1098,26 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
 
   // ================ Registration and Search ================
   Future<void> _processFaceRegistration(String employeeCode) async {
+    // This validation means to get the employee ID using employee Code.
     if (!await _validateEmployee(employeeCode)) {
       _showSnackBar('Invalid employee code', type: SnackBarType.error);
       return;
     }
 
+    // Checking if the user can add face or not
     if (!await _canAddFace()) {
       _showSnackBar('Cannot add face at this time', type: SnackBarType.error);
       return;
     }
 
+    // Indexing the face data through amazon rekognition
     final response = await _indexFaces(_imagePath!, employeeCode);
     if (response?.faceRecords?.isEmpty ?? true) {
       _showSnackBar('Failed to index face', type: SnackBarType.error);
       return;
     }
 
+    // At the end register the user.
     final result = await _registerFace();
     if (result?['isSuccess'] == true) {
       _showSnackBar(result!['content'], type: SnackBarType.success);
@@ -1174,7 +1187,7 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
       } else {
         SnackbarHelper.showSnackBar(
           context,
-          'Failed to register face: ${response['content']}',
+          'Failed to register face: ${response['content'] ?? response['errorMessage']}',
           type: SnackBarType.error,
         );
       }
@@ -1185,6 +1198,7 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
         type: SnackBarType.error,
       );
     } finally {
+      Future.delayed(Duration(seconds: 3));
       _setLoading(false);
       _imagePath = null;
       attendanceRecords = [];
@@ -1242,14 +1256,20 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
       if (response.faceMatches?.isNotEmpty ?? false) {
         final matchedFace = response.faceMatches!.first.face;
         if (matchedFace != null) {
-          await _logAttendance(
-              matchedFace.faceId!, matchedFace.externalImageId!);
+          // logging means storing in db
+
+          // await _logAttendance(
+          //     matchedFace.faceId!, matchedFace.externalImageId!);
           // _showSnackBar(
           // 'User found: ${matchedFace.externalImageId}, attendance marked.');
-          await _getAttendanceRecords(matchedFace.faceId!);
-          await _validateEmployee(matchedFace.externalImageId!); //to get the employee ID.
-          final response =
-              await _markAttendance.markAttendance(employeeId.toString() , 'Face');
+
+          // get and show the logs in the screen
+
+          // await _getAttendanceRecords(matchedFace.faceId!);
+          await _validateEmployee(
+              matchedFace.externalImageId!); //to get the employee ID.
+          final response = await _markAttendance.markAttendance(
+              employeeId.toString(), 'Face');
 
           if (response != null) {
             _showSnackBar(response, type: SnackBarType.success);
@@ -1262,6 +1282,8 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
       _showSnackBar('Error during search', type: SnackBarType.error);
     } finally {
       _setLoading(false);
+      _imagePath = null;
+      attendanceRecords = [];
     }
   }
 
@@ -1314,8 +1336,19 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
 // ================ UI Widgets ================
 
 // Image Preview with Rounded Corners
-  Widget _buildImagePreview() => _imagePath == null
-      ? const SizedBox.shrink()
+  Widget _buildImagePreview() => _imagePath == null || _imagePath!.isEmpty
+      ? Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset(
+              'assets/images/person_placeholder.png', // Placeholder image
+              width: 180,
+              height: 180,
+              fit: BoxFit.cover,
+            ),
+          ),
+        )
       : Padding(
           padding: const EdgeInsets.symmetric(vertical: 20),
           child: ClipRRect(
@@ -1337,30 +1370,14 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
           children: [
             ElevatedButton.icon(
               onPressed: isActionInProgress ? null : () => pickImage('search'),
-              icon: const Icon(Icons.search, size: 18),
-              label: const Text('Search Face'),
-              style: ElevatedButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-            ),
-            const SizedBox(width: 20),
-            ElevatedButton.icon(
-              onPressed:
-                  isActionInProgress ? null : () => pickImage('register'),
               icon: const Icon(
-                Icons.person_add,
-                size: 18,
-                color: Colors.white,
+                Icons.search,
+                size: 20,
               ),
-              label: const Text(
-                'Register Face',
-                style: TextStyle(color: Colors.white),
-              ),
+              label: const Text('Mark Attendance'),
               style: ElevatedButton.styleFrom(
+                iconColor: Colors.white,
+                foregroundColor: Colors.white,
                 backgroundColor: Color(0xFF17a2b8),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -1425,42 +1442,62 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
 
 // Main UI with Modern Layout
   @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          title: const Text('Face Recognition'),
-          centerTitle: true,
-          backgroundColor: Color(0xFF17a2b8),
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (isLoading)
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Shimmer.fromColors(
-                    baseColor: Colors.grey[400]!,
-                    highlightColor: Colors.grey[100]!,
-                    child: const Text(
-                      'Loading...',
-                      style: TextStyle(
-                        fontSize: 28.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              _buildImagePreview(),
-              _buildActionButtons(),
-              const Divider(height: 30, thickness: 1),
-              const Text(
-                'Attendance Records',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              _buildAttendanceList(),
-            ],
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Face Recognition'),
+        centerTitle: true,
+        backgroundColor: Color(0xFF17a2b8),
+      ),
+      body: Container(
+        width: double.infinity, // Ensures it covers the full width
+        height: MediaQuery.of(context)
+            .size
+            .height, // Ensures it covers the full height
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFE0F7FA), Color(0xFF80DEEA)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
-      );
+        child: Center(
+          child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Card(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (isLoading)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Shimmer.fromColors(
+                          baseColor: Colors.grey[400]!,
+                          highlightColor: Colors.grey[100]!,
+                          child: const Text(
+                            'Loading...',
+                            style: TextStyle(
+                              fontSize: 28.0,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    _buildImagePreview(),
+                    _buildActionButtons(),
+                    // const Divider(height: 30, thickness: 1),
+                    // const Text(
+                    //   'Attendance Records',
+                    //   style:
+                    //       TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    // ),
+                    // _buildAttendanceList(),
+                  ],
+                ),
+              )),
+        ),
+      ),
+    );
+  }
 }

@@ -17,7 +17,7 @@ class DeviceRegistrationService {
   Future<Map<String, int>> getLocations() async {
     try {
       final response = await _client.get(
-        Uri.parse('$baseUrl/Locations/GetLocations'),
+        Uri.parse('$baseUrl/Locations/GetLocations/0'),
         headers: headers,
       );
 

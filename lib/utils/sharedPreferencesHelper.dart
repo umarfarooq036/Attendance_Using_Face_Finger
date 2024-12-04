@@ -76,6 +76,12 @@ class SharedPrefsHelper {
     await prefs.clear();
   }
 
+  /// Clear the value for a specific key
+  static Future<void> clearValue(String key) async {
+    final prefs = await _getPrefs();
+    await prefs.setString(key, '');  // Sets an empty string as the value
+  }
+
   /// Clear Specific Key
   static Future<void> removeKey(String key) async {
     final prefs = await _getPrefs();

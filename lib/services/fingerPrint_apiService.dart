@@ -71,7 +71,8 @@ class FingerFaceApiService {
     // dynamic apiResponse;
     try {
       final response = await _client.get(
-        Uri.parse('$baseUrl/EmployeeManagement/${type == 'face' ? 'CanAddFace' : 'CanAddFinger'}?EmployeeId=$id'),
+        Uri.parse(
+            '$baseUrl/EmployeeManagement/${type == 'face' ? 'CanAddFace' : 'CanAddFinger'}?EmployeeId=$id'),
         headers: headers,
       );
 
@@ -95,6 +96,7 @@ class FingerFaceApiService {
     }
   }
 
+  // For Registration of FingerPrints
   Future<Map<String, dynamic>> registerUser({
     required String employeeId,
     required String fingerprintData,
@@ -120,6 +122,7 @@ class FingerFaceApiService {
     }
   }
 
+  // For the registration of the Faces
   Future<Map<String, dynamic>> registerUserFace({
     required String employeeId,
     required String faceId,
@@ -130,7 +133,7 @@ class FingerFaceApiService {
         Uri.parse('$baseUrl/EmployeeManagement/AddFaces'),
         headers: headers,
         body: json.encode({
-          'employeeId': employeeId,
+          'employeeId': int.parse(employeeId),
           'faces': faceId,
           'images': images
         }),
@@ -209,7 +212,7 @@ class FingerFaceApiService {
   //   }
   // }
 
-  Future<int?> getEmployeeId(BuildContext context , String employeeCode) async {
+  Future<int?> getEmployeeId(BuildContext context, String employeeCode) async {
     try {
       final response = await _client.get(
         Uri.parse(
@@ -231,8 +234,7 @@ class FingerFaceApiService {
             throw Exception("Invalid employeeId format in the response");
           }
         } else {
-          SnackbarHelper.showSnackBar(
-              context, data['errorMessage']);
+          SnackbarHelper.showSnackBar(context, data['errorMessage']);
           throw Exception(
               data?['errorMessage'] ?? "Failed to fetch employee ID");
         }

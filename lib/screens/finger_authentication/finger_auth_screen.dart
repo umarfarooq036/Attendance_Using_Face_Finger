@@ -768,6 +768,15 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
     super.initState();
     // _checkDeviceStatus();
     _initMethodChannelHandler();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _readyDevice();
+    });
+  }
+
+  void _readyDevice() async {
+    await _startCapture();
+    // await _identifyUser(empId);
   }
 
   void _initMethodChannelHandler() {
@@ -906,8 +915,7 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
         setState(() {
           _statusMessage = 'Capture Started!';
         });
-      }
-      else {
+      } else {
         setState(() {
           _statusMessage = 'Please Start Capture Again!';
         });
@@ -927,46 +935,6 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
       _showErrorSnackBar('Stop capture failed: $e');
     }
   }
-
-  // Future<void> _registerUser() async {
-  //   // Validate input
-  //   if (!_validateInput()) return;
-  //
-  //   setState(() => _isLoading = true);
-  //
-  //   try {
-  //     // // Validate inputs and template
-  //     // if (template == null) {
-  //     //   _showErrorSnackBar('Please capture fingerprint template first');
-  //     //   return;
-  //     // }
-  //
-  //     final email = _empIdController.text.trim();
-  //     employeeId = await _apiService.getEmployeeId(email);
-  //
-  //     if (employeeId == null) {
-  //       _showErrorSnackBar('Could not retrieve employee ID');
-  //       return;
-  //     }
-  //
-  //     // Register user with template
-  //     final response = await _apiService.registerUser(
-  //       email: email,
-  //       fingerprintData: template!,
-  //     );
-  //
-  //     if (response['isSuccess']) {
-  //       _showSuccessSnackBar('User registered successfully');
-  //       _resetForm();
-  //     } else {
-  //       _showErrorSnackBar(response['errorMessage'] ?? 'Registration failed');
-  //     }
-  //   } catch (e) {
-  //     _showErrorSnackBar('Registration error: $e');
-  //   } finally {
-  //     setState(() => _isLoading = false);
-  //   }
-  // }
 
   Future<void> _registerUser() async {
     if (!_validateInput()) return;
@@ -1054,24 +1022,6 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
     return true;
   }
 
-  // for now the email validation is removed
-
-  // bool _isValidEmail(String email) {
-  //   final email_Regex = RegExp(emailRegex);
-  //   return email_Regex.hasMatch(email);
-  // }
-
-  // void _resetForm() {
-  //   setState(() {
-  //     _empIdController.clear();
-  //     images = ['', '', ''];
-  //     template = null;
-  //     Imageindex = 0;
-  //     _statusMessage = "Status: Waiting for action";
-  //     _fingerprintImage = null;
-  //   });
-  // }
-
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1094,10 +1044,27 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
 
   @override
   void dispose() {
+    // Dispose the TextEditingController
     _empIdController.dispose();
-    _apiService.dispose();
+
+    // Safely stop capture if it's running
+    _stopCaptureSafely();
+
+    // Clean up other resources if necessary
     super.dispose();
   }
+
+  Future<void> _stopCaptureSafely() async {
+    try {
+      // Safely stop the capture using the platform channel
+      await platform.invokeMethod('stopCapture');
+    } catch (e) {
+      // Log or handle the error; don't let it crash the app
+      debugPrint('Error stopping capture: $e');
+    }
+  }
+
+  Future<void> _refresh() async {}
 
   @override
   Widget build(BuildContext context) {
@@ -1106,144 +1073,297 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
         title: const Text('Fingerprint Scanner'),
         backgroundColor: const Color(0xFF17a2b8),
       ),
-      body: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Fingerprint Image Display
-                _fingerprintImage != null
-                    ? Container(
-                        height: 200,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: Image.memory(_fingerprintImage!),
-                      )
-                    : Container(
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Fingerprint Image',
-                            style: TextStyle(color: Colors.grey.shade600),
-                          ),
-                        ),
-                      ),
-                const SizedBox(height: 20),
-
-                // Status Message
-                _isLoading
-                    ? Center(
-                        child: Shimmer.fromColors(
-                          baseColor: Colors.grey[300]!,
-                          highlightColor: Colors.grey[100]!,
-                          child: const Text(
-                            'Loading...',
-                            style: TextStyle(
-                              fontSize: 28.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      )
-                    : Text(
-                        _statusMessage,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.blueGrey,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                const SizedBox(height: 20),
-
-                // Employee ID Input
-                TextFormField(
-                  controller: _empIdController,
-                  decoration: InputDecoration(
-                    labelText: 'Employee ID',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    suffixIcon: const Icon(Icons.person),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please Enter Your Employee ID';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Action Buttons
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    ElevatedButton(
-                      onPressed: _startCapture,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
-                      ),
-                      child: const Text('Start Capture'),
-                    ),
-                    ElevatedButton(
-                      onPressed: _stopCapture,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
-                      ),
-                      child: const Text('Stop Capture'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () => _registerUser(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
-                      ),
-                      child: const Text('Register User'),
-                    ),
-                    // ElevatedButton(
-                    //   onPressed: _identifyUser,
-                    //   style: ElevatedButton.styleFrom(
-                    //     backgroundColor: Colors.orange,
-                    //     shape: RoundedRectangleBorder(
-                    //       borderRadius: BorderRadius.circular(8),
-                    //     ),
-                    //     padding: const EdgeInsets.symmetric(
-                    //         horizontal: 24, vertical: 12),
-                    //   ),
-                    //   child: const Text('Identify User'),
-                    // ),
-                  ],
-                ),
-              ],
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFE0F7FA), Color(0xFF80DEEA)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+          ),
+          child: ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              Card(
+                elevation: 5,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Fingerprint Image Display
+                      _fingerprintImage != null
+                          ? Container(
+                              height: 200,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: Image.memory(_fingerprintImage!),
+                            )
+                          : Container(
+                              height: 200,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                  child: Image.asset(
+                                'assets/images/fingerprint-scan.png', // Add your placeholder image in the assets folder
+                                fit: BoxFit.cover,
+                              )),
+                            ),
+                      const SizedBox(height: 20),
+
+                      // Status Message
+                      _isLoading
+                          ? Center(
+                              child: Shimmer.fromColors(
+                                baseColor: Colors.grey[300]!,
+                                highlightColor: Colors.grey[100]!,
+                                child: const Text(
+                                  'Loading...',
+                                  style: TextStyle(
+                                    fontSize: 28.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Text(
+                              _statusMessage,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.blueGrey,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                      const SizedBox(height: 20),
+
+                      // Employee ID Input (Commented out for now)
+                      // TextFormField(
+                      //   controller: _empIdController,
+                      //   decoration: InputDecoration(
+                      //     labelText: 'Employee ID',
+                      //     border: OutlineInputBorder(
+                      //       borderRadius: BorderRadius.circular(8.0),
+                      //     ),
+                      //     suffixIcon: const Icon(Icons.person),
+                      //   ),
+                      //   validator: (value) {
+                      //     if (value == null || value.isEmpty) {
+                      //       return 'Please Enter Your Employee ID';
+                      //     }
+                      //     return null;
+                      //   },
+                      // ),
+                      const SizedBox(height: 20),
+
+                      // Action Buttons (Uncomment and customize if needed)
+                      // Wrap(
+                      //   spacing: 10,
+                      //   runSpacing: 10,
+                      //   children: [
+                      //     ElevatedButton(
+                      //       onPressed: _startCapture,
+                      //       style: ElevatedButton.styleFrom(
+                      //         backgroundColor: Colors.green,
+                      //         shape: RoundedRectangleBorder(
+                      //           borderRadius: BorderRadius.circular(8),
+                      //         ),
+                      //         padding: const EdgeInsets.symmetric(
+                      //             horizontal: 24, vertical: 12),
+                      //       ),
+                      //       child: const Text('Start Capture'),
+                      //     ),
+                      //     ElevatedButton(
+                      //       onPressed: _stopCapture,
+                      //       style: ElevatedButton.styleFrom(
+                      //         backgroundColor: Colors.redAccent,
+                      //         shape: RoundedRectangleBorder(
+                      //           borderRadius: BorderRadius.circular(8),
+                      //         ),
+                      //         padding: const EdgeInsets.symmetric(
+                      //             horizontal: 24, vertical: 12),
+                      //       ),
+                      //       child: const Text('Stop Capture'),
+                      //     ),
+                      //     ElevatedButton(
+                      //       onPressed: () => _registerUser(),
+                      //       style: ElevatedButton.styleFrom(
+                      //         backgroundColor: Colors.blue,
+                      //         shape: RoundedRectangleBorder(
+                      //           borderRadius: BorderRadius.circular(8),
+                      //         ),
+                      //         padding: const EdgeInsets.symmetric(
+                      //             horizontal: 24, vertical: 12),
+                      //       ),
+                      //       child: const Text('Register User'),
+                      //     ),
+                      //   ],
+                      // ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     appBar: AppBar(
+  //       title: const Text('Fingerprint Scanner'),
+  //       backgroundColor: const Color(0xFF17a2b8),
+  //     ),
+  //     body: SingleChildScrollView(
+  //       child: Form(
+  //         key: _formKey,
+  //         child: Padding(
+  //           padding: const EdgeInsets.all(16.0),
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.stretch,
+  //             children: [
+  //               // Fingerprint Image Display
+  //               _fingerprintImage != null
+  //                   ? Container(
+  //                       height: 200,
+  //                       decoration: BoxDecoration(
+  //                         borderRadius: BorderRadius.circular(12),
+  //                         border: Border.all(color: Colors.grey.shade300),
+  //                       ),
+  //                       child: Image.memory(_fingerprintImage!),
+  //                     )
+  //                   : Container(
+  //                       height: 200,
+  //                       decoration: BoxDecoration(
+  //                         color: Colors.grey[200],
+  //                         borderRadius: BorderRadius.circular(12),
+  //                       ),
+  //                       child: Center(
+  //                         child: Text(
+  //                           'Fingerprint Image',
+  //                           style: TextStyle(color: Colors.grey.shade600),
+  //                         ),
+  //                       ),
+  //                     ),
+  //               const SizedBox(height: 20),
+  //
+  //               // Status Message
+  //               _isLoading
+  //                   ? Center(
+  //                       child: Shimmer.fromColors(
+  //                         baseColor: Colors.grey[300]!,
+  //                         highlightColor: Colors.grey[100]!,
+  //                         child: const Text(
+  //                           'Loading...',
+  //                           style: TextStyle(
+  //                             fontSize: 28.0,
+  //                             fontWeight: FontWeight.bold,
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     )
+  //                   : Text(
+  //                       _statusMessage,
+  //                       textAlign: TextAlign.center,
+  //                       style: const TextStyle(
+  //                         fontSize: 16,
+  //                         color: Colors.blueGrey,
+  //                         fontWeight: FontWeight.w500,
+  //                       ),
+  //                     ),
+  //               const SizedBox(height: 20),
+  //
+  //               // Employee ID Input
+  //               TextFormField(
+  //                 controller: _empIdController,
+  //                 decoration: InputDecoration(
+  //                   labelText: 'Employee ID',
+  //                   border: OutlineInputBorder(
+  //                     borderRadius: BorderRadius.circular(8.0),
+  //                   ),
+  //                   suffixIcon: const Icon(Icons.person),
+  //                 ),
+  //                 validator: (value) {
+  //                   if (value == null || value.isEmpty) {
+  //                     return 'Please Enter Your Employee ID';
+  //                   }
+  //                   return null;
+  //                 },
+  //               ),
+  //               const SizedBox(height: 20),
+  //
+  //               // Action Buttons
+  //               Wrap(
+  //                 spacing: 10,
+  //                 runSpacing: 10,
+  //                 children: [
+  //                   ElevatedButton(
+  //                     onPressed: _startCapture,
+  //                     style: ElevatedButton.styleFrom(
+  //                       backgroundColor: Colors.green,
+  //                       shape: RoundedRectangleBorder(
+  //                         borderRadius: BorderRadius.circular(8),
+  //                       ),
+  //                       padding: const EdgeInsets.symmetric(
+  //                           horizontal: 24, vertical: 12),
+  //                     ),
+  //                     child: const Text('Start Capture'),
+  //                   ),
+  //                   ElevatedButton(
+  //                     onPressed: _stopCapture,
+  //                     style: ElevatedButton.styleFrom(
+  //                       backgroundColor: Colors.redAccent,
+  //                       shape: RoundedRectangleBorder(
+  //                         borderRadius: BorderRadius.circular(8),
+  //                       ),
+  //                       padding: const EdgeInsets.symmetric(
+  //                           horizontal: 24, vertical: 12),
+  //                     ),
+  //                     child: const Text('Stop Capture'),
+  //                   ),
+  //                   ElevatedButton(
+  //                     onPressed: () => _registerUser(),
+  //                     style: ElevatedButton.styleFrom(
+  //                       backgroundColor: Colors.blue,
+  //                       shape: RoundedRectangleBorder(
+  //                         borderRadius: BorderRadius.circular(8),
+  //                       ),
+  //                       padding: const EdgeInsets.symmetric(
+  //                           horizontal: 24, vertical: 12),
+  //                     ),
+  //                     child: const Text('Register User'),
+  //                   ),
+  //                   // ElevatedButton(
+  //                   //   onPressed: _identifyUser,
+  //                   //   style: ElevatedButton.styleFrom(
+  //                   //     backgroundColor: Colors.orange,
+  //                   //     shape: RoundedRectangleBorder(
+  //                   //       borderRadius: BorderRadius.circular(8),
+  //                   //     ),
+  //                   //     padding: const EdgeInsets.symmetric(
+  //                   //         horizontal: 24, vertical: 12),
+  //                   //   ),
+  //                   //   child: const Text('Identify User'),
+  //                   // ),
+  //                 ],
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 }
