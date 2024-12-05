@@ -22,6 +22,7 @@ void main() async{
 //   // log(token.toString());
 // }
 
+@pragma('vm:entry-point')
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

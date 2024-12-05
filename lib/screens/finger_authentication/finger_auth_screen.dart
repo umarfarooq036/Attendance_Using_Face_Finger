@@ -732,6 +732,7 @@ import 'package:pbi_time/services/mark_attendance_service.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../services/fingerPrint_apiService.dart';
 
+@pragma('vm:entry-point')
 class FingerprintScannerScreen extends StatefulWidget {
   static String routeName = '/fingerAuthScreen';
 

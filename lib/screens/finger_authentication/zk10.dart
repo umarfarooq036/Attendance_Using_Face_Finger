@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 
+@pragma('vm:entry-point')
 class ZKFingerprint {
   static const MethodChannel _channel = MethodChannel('zkfingerprint_channel');
 

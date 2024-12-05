@@ -1829,6 +1829,4 @@ public class MainActivity extends FlutterFragmentActivity {
             }
         });
     }
-
-
 }
