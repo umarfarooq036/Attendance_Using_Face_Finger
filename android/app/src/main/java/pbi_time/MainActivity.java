@@ -1105,29 +1105,20 @@ import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.android.FlutterFragmentActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
-import pbi_time.models.CanAddFingerModel;
-//import retrofit2.Call;
-//import retrofit2.Callback;
-//import retrofit2.Response;
 
-import android.Manifest;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
+
 import android.graphics.Bitmap;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
-import android.os.Build;
-import android.os.Bundle;
+
 import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.Task;
-//import com.google.firebase.FirebaseApp;
 
 import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
@@ -1174,7 +1165,7 @@ public class MainActivity extends FlutterFragmentActivity {
     private int enroll_index = 0;
     private byte[][] regtemparray = new byte[3][2048];
     private boolean bRegister = false;
-    private DBManager dbManager;
+//    private DBManager dbManager;
     private final FingerprintCaptureListener fingerprintCaptureListener = new FingerprintCaptureListener() {
 
         @Override
@@ -1749,12 +1740,14 @@ public class MainActivity extends FlutterFragmentActivity {
     }
 
         private void openDevice() {
+
+        try {
         createFingerprintSensor();
         loadAllTemplatesFromDB();
         bRegister = false;
         enroll_index = 0;
         isReseted = false;
-        try {
+
             fingerprintSensor.open(deviceIndex);
 //            loadAllTemplatesFromDB();
             fingerprintSensor.setFingerprintCaptureListener(deviceIndex, fingerprintCaptureListener);
@@ -1762,9 +1755,15 @@ public class MainActivity extends FlutterFragmentActivity {
             fingerprintSensor.startCapture(deviceIndex);
             bStarted = true;
             showToast("Device connected successfully");
-        } catch (FingerprintException e) {
-            e.printStackTrace();
-            showToast("Device connection failed");
+        } catch (Exception e) {
+            Log.e(TAG, "Device Open Error in Release Mode", e);
+            // Send detailed error to Flutter
+            runOnUiThread(() -> {
+                Map<String, Object> errorDetails = new HashMap<>();
+                errorDetails.put("message", e.getMessage());
+                errorDetails.put("stackTrace", Log.getStackTraceString(e));
+                methodChannel.invokeMethod("deviceOpenError", errorDetails);
+            });
         }
     }
 

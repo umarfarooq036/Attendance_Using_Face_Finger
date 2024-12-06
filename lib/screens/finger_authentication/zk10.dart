@@ -4,6 +4,16 @@ import 'package:flutter/services.dart';
 class ZKFingerprint {
   static const MethodChannel _channel = MethodChannel('zkfingerprint_channel');
 
+  static Future<void> setupErrorHandling() async {
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'deviceOpenError') {
+        print('Device Open Error: ${call.arguments}');
+        // Handle or log the error
+      }
+    });
+  }
+
+
   Future<String> startCapture() async {
     return await _channel.invokeMethod('startCapture');
   }
