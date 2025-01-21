@@ -6,8 +6,9 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 import 'dart:convert';
 
-import 'package:pbi_time/constants.dart';
-import 'package:pbi_time/utils/snackBar.dart';
+import '../constants.dart';
+import '../utils/snackBar.dart';
+
 
 class ApiResponse<T> {
   final T? data;

@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'package:pbi_time/utils/sharedPreferencesHelper.dart';
 
 import '../constants.dart';
 import 'package:http/http.dart' as http;
 
+import '../utils/sharedPreferencesHelper.dart';
 import 'device_registration_service.dart';
 import 'location_service.dart';
 
@@ -39,7 +39,7 @@ class MarkAttendanceService {
       : _client = client ?? http.Client();
 
   Future<String?> markAttendance(String empId, String type,
-      {String? image = ''}) async {
+      {String? image = '', String attendanceType = ''}) async {
     await _initializeLocation();
     try {
       String? deviceToken = await SharedPrefsHelper.getDeviceToken();
@@ -85,7 +85,8 @@ class MarkAttendanceService {
           "lat": lat,
           "long": long,
           "deviceToken": deviceToken ?? '', // Ensure deviceToken is not null
-          "image": image
+          "image": image,
+          "action": attendanceType
         }),
       );
 

@@ -203,6 +203,7 @@
 // }
 
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -210,6 +211,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../services/fingerPrint_apiService.dart';
 import '../../services/mark_attendance_service.dart';
+import '../../utils/attendanceTypes.dart';
 import '../../utils/sharedPreferencesHelper.dart';
 import '../../utils/snackBar.dart';
 
@@ -232,6 +234,8 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
   DateTime timeStamp = DateTime.now();
   final MarkAttendanceService _markAttendanceService = MarkAttendanceService();
   final FingerFaceApiService _apiService = FingerFaceApiService();
+
+  String? _selectedValue = attendanceTypes.first.keys.first;
 
   @override
   void dispose() {
@@ -296,7 +300,8 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
       final empId = await _validateEmployee(
           _employeeCodeController.text); //to get the employee ID.
       final response = await _markAttendanceService.markAttendance(
-          empId.toString(), 'Manual' , image: base64Image);
+          empId.toString(), 'Manual',
+          image: base64Image, attendanceType: _selectedValue!);
       if (response != null) {
         _showSnackBar(response, type: SnackBarType.info);
       } else {
@@ -315,6 +320,64 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
 
   void _showSnackBar(String message, {SnackBarType type = SnackBarType.info}) {
     SnackbarHelper.showSnackBar(context, message, type: type);
+  }
+
+  Widget _buildActionTypes() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.teal[700]!, width: 1.5),
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: DropdownButtonFormField<String>(
+          isExpanded: true,
+          value: _selectedValue,
+          decoration: InputDecoration(
+            labelText: 'Attendance Type',
+            hintText: 'Select Attendance Type',
+            labelStyle: TextStyle(
+              color: Colors.teal[700],
+              fontWeight: FontWeight.w600,
+            ),
+            hintStyle: TextStyle(
+              color: Colors.teal[400],
+            ),
+            border: InputBorder.none,
+          ),
+          icon: Icon(Icons.arrow_drop_down, color: Colors.teal[700]),
+          dropdownColor: Colors.white,
+          items: attendanceTypes.map((type) {
+            String key = type.keys.first;
+            return DropdownMenuItem<String>(
+              value: key,
+              child: Text(
+                key,
+                style: TextStyle(
+                  color: Colors.teal[900],
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: (newValue) {
+            setState(() {
+              _selectedValue = newValue;
+              log(newValue!);
+            });
+          },
+          validator: (value) {
+            // Ensure the user doesn't select the default placeholder
+            if (value == null || value == 'Please Select') {
+              return 'Please select a valid attendance type';
+            }
+            return null;
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -418,6 +481,8 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 20),
+                _buildActionTypes(),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
                   onPressed: pickImage,

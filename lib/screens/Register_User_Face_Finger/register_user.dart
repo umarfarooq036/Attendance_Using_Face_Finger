@@ -1,8 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:pbi_time/screens/Register_User_Face_Finger/face_Registration_screen.dart';
-import 'package:pbi_time/screens/Register_User_Face_Finger/finger_Registration_screen.dart';
+
+import 'face_Registration_screen.dart';
+import 'finger_Registration_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   static String routeName = '/registerUser';

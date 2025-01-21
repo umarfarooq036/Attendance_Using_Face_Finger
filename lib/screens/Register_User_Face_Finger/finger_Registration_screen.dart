@@ -3,9 +3,9 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:pbi_time/services/mark_attendance_service.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../services/fingerPrint_apiService.dart';
+import '../../services/mark_attendance_service.dart';
 
 class FingerprintRegistrationScreen extends StatefulWidget {
   static String routeName = '/fingerRegisterScreen';
@@ -338,7 +338,8 @@ class _FingerprintScannerScreenState
       if (empId == null) {
         return _showErrorSnackBar('Employee ID not found!');
       }
-      final response = await _markAttendance.markAttendance(empId, 'Finger');
+      final response = await _markAttendance.markAttendance(empId, 'Finger',
+          attendanceType: '');
 
       if (response != null) {
         _showSuccessSnackBar(response);

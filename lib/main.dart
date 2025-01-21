@@ -1,8 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:pbi_time/routes/app_routes.dart';
-import 'package:pbi_time/screens/Dashboard/dashboard.dart';
-import 'package:pbi_time/screens/home_screen.dart';
+import 'package:office_attendance/routes/app_routes.dart';
+import 'package:office_attendance/screens/Dashboard/dashboard.dart';
 
 
 void main() async{

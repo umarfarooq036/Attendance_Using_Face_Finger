@@ -8,12 +8,12 @@ import 'package:http/http.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:aws_rekognition_api/rekognition-2016-06-27.dart' as rekognition;
 import 'package:aws_dynamodb_api/dynamodb-2012-08-10.dart';
-import 'package:pbi_time/screens/face_attendance/configs.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../services/fingerPrint_apiService.dart';
 import '../../services/mark_attendance_service.dart';
 import '../../utils/sharedPreferencesHelper.dart';
 import '../../utils/snackBar.dart';
+import '../face_attendance/configs.dart';
 
 class FaceRegistrationScreen extends StatefulWidget {
   static const String routeName = '/registerUserFace';

@@ -10,7 +10,7 @@
     <uses-feature android:name="android.hardware.usb.host" />
 
     <application
-        android:label="pbi_time"
+        android:label="Office Attendence"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

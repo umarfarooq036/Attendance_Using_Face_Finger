@@ -728,9 +728,10 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:pbi_time/services/mark_attendance_service.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../services/fingerPrint_apiService.dart';
+import '../../services/mark_attendance_service.dart';
+import '../../utils/attendanceTypes.dart';
 
 @pragma('vm:entry-point')
 class FingerprintScannerScreen extends StatefulWidget {
@@ -761,6 +762,7 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
   int Imageindex = 0;
   int? employeeId;
   bool registerFlagForImageStatusMsg = false;
+  String? _selectedValue = attendanceTypes.first.keys.first;
 
   final TextEditingController _empIdController = TextEditingController();
 
@@ -994,7 +996,11 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
       if (empId == null) {
         return _showErrorSnackBar('Employee ID not found!');
       }
-      final response = await _markAttendance.markAttendance(empId, 'Finger');
+      final response = await _markAttendance.markAttendance(
+        empId,
+        'Finger',
+        attendanceType: _selectedValue!,
+      );
 
       if (response != null) {
         _showSuccessSnackBar(response);
@@ -1066,6 +1072,64 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
   }
 
   Future<void> _refresh() async {}
+
+  Widget _buildActionTypes() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.teal[700]!, width: 1.5),
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: DropdownButtonFormField<String>(
+          isExpanded: true,
+          value: _selectedValue,
+          decoration: InputDecoration(
+            labelText: 'Attendance Type',
+            hintText: 'Select Attendance Type',
+            labelStyle: TextStyle(
+              color: Colors.teal[700],
+              fontWeight: FontWeight.w600,
+            ),
+            hintStyle: TextStyle(
+              color: Colors.teal[400],
+            ),
+            border: InputBorder.none,
+          ),
+          icon: Icon(Icons.arrow_drop_down, color: Colors.teal[700]),
+          dropdownColor: Colors.white,
+          items: attendanceTypes.map((type) {
+            String key = type.keys.first;
+            return DropdownMenuItem<String>(
+              value: key,
+              child: Text(
+                key,
+                style: TextStyle(
+                  color: Colors.teal[900],
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: (newValue) {
+            setState(() {
+              _selectedValue = newValue;
+              log(newValue!);
+            });
+          },
+          validator: (value) {
+            // Ensure the user doesn't select the default placeholder
+            if (value == null || value == 'Please Select') {
+              return 'Please select a valid attendance type';
+            }
+            return null;
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1146,6 +1210,8 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
                               ),
                             ),
                       const SizedBox(height: 20),
+
+                      _buildActionTypes(),
 
                       // Employee ID Input (Commented out for now)
                       // TextFormField(

@@ -4,18 +4,16 @@ import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:pbi_time/screens/Mannual%20Registration/mannual_registration.dart';
-import 'package:pbi_time/screens/Register_User_Face_Finger/register_user.dart';
-import 'package:pbi_time/screens/face_attendance/face_authentication_screen.dart';
-
-import 'package:pbi_time/services/device_registration_service.dart';
-import 'package:pbi_time/utils/sharedPreferencesHelper.dart';
-import 'package:pbi_time/utils/snackBar.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../firebase/fcm_service.dart';
+import '../../services/device_registration_service.dart';
 import '../../services/location_service.dart';
+import '../../utils/sharedPreferencesHelper.dart';
+import '../../utils/snackBar.dart';
+import '../Mannual Registration/mannual_registration.dart';
+import '../Register_User_Face_Finger/register_user.dart';
+import '../face_attendance/face_authentication_screen.dart';
 import '../finger_authentication/finger_auth_screen.dart';
 
 class Dashboard extends StatefulWidget {
