@@ -32,8 +32,9 @@ class _DashboardState extends State<Dashboard> {
 
   Map<String, dynamic> _locations = {};
   String _selectedLocation = '';
-  int? _selectedLocationCode;
+  int? _selectedLocationCode = 1;
   String deviceName = 'UnKnown Device';
+  bool _isRegisteringDevice = false;
 
   @override
   void initState() {
@@ -103,11 +104,11 @@ class _DashboardState extends State<Dashboard> {
 
   Future<void> _fetchLocations() async {
     try {
-      final locations = await _registrationService.getLocations();
+      // final locations = await _registrationService.getLocations();
       deviceName = await getDeviceName();
-      setState(() {
-        _locations = locations;
-      });
+      // setState(() {
+      // _locations = locations;
+      // });
     } catch (e) {
       // Handle errors
       print('Error loading locations: $e');
@@ -152,6 +153,9 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Future<void> _registerOfficeDevice() async {
+    setState(() {
+      _isRegisteringDevice = true;
+    });
     try {
       // Ensure that _selectedLocationCode is not null before proceeding
       if (_selectedLocationCode == null) {
@@ -181,8 +185,248 @@ class _DashboardState extends State<Dashboard> {
       // Show error snack bar
       SnackbarHelper.showSnackBar(context, 'Registration Failed: $e',
           type: SnackBarType.error);
+    } finally {
+      setState(() {
+        _isRegisteringDevice = false;
+      });
     }
   }
+
+  // @override
+  // Widget build(BuildContext context) {
+  //   // Get screen dimensions
+  //   final screenWidth = MediaQuery.of(context).size.width;
+  //   final screenHeight = MediaQuery.of(context).size.height;
+  //
+  //   return Scaffold(
+  //     appBar: AppBar(
+  //       centerTitle: true,
+  //       title: const Text(
+  //         'PBI Attendance',
+  //         style: TextStyle(fontWeight: FontWeight.bold),
+  //       ),
+  //       backgroundColor: const Color(0xFF17a2b8),
+  //       elevation: 0,
+  //     ),
+  //     body: Container(
+  //       height: screenHeight,
+  //       decoration: const BoxDecoration(
+  //         gradient: LinearGradient(
+  //           colors: [Color(0xFFE0F7FA), Color(0xFF80DEEA)],
+  //           begin: Alignment.topCenter,
+  //           end: Alignment.bottomCenter,
+  //         ),
+  //       ),
+  //       child: SingleChildScrollView(
+  //         padding: EdgeInsets.symmetric(
+  //           horizontal: screenWidth * 0.25,
+  //           vertical: screenHeight * 0.02,
+  //         ),
+  //         child: Column(
+  //           mainAxisAlignment: MainAxisAlignment.center,
+  //           children: [
+  //             Card(
+  //               elevation: 10,
+  //               shape: RoundedRectangleBorder(
+  //                 borderRadius: BorderRadius.circular(20),
+  //               ),
+  //               child: Padding(
+  //                 padding: EdgeInsets.all(screenWidth * 0.05),
+  //                 child: Column(
+  //                   children: [
+  //                     // Location Dropdown with Registration Icons
+  //                     // Row(
+  //                     //   children: [
+  //                     //     // Expanded(
+  //                     //     //   flex: 4,
+  //                     //     //   child: _locations.isEmpty
+  //                     //     //       ? Center(
+  //                     //     //           child: Shimmer.fromColors(
+  //                     //     //             baseColor: Colors.grey[300]!,
+  //                     //     //             highlightColor: Colors.grey[100]!,
+  //                     //     //             child: const Text(
+  //                     //     //               'Loading...',
+  //                     //     //               style: TextStyle(
+  //                     //     //                 fontSize: 28.0,
+  //                     //     //                 fontWeight: FontWeight.bold,
+  //                     //     //               ),
+  //                     //     //             ),
+  //                     //     //           ),
+  //                     //     //         )
+  //                     //     //       : SizedBox(
+  //                     //     //           height: 45,
+  //                     //     //           child: DropdownButtonFormField<String>(
+  //                     //     //             decoration: InputDecoration(
+  //                     //     //               labelText: 'Select Location',
+  //                     //     //               border: OutlineInputBorder(
+  //                     //     //                 borderRadius:
+  //                     //     //                     BorderRadius.circular(15),
+  //                     //     //               ),
+  //                     //     //               constraints: BoxConstraints(
+  //                     //     //                 maxWidth: screenWidth * 0.9,
+  //                     //     //               ),
+  //                     //     //             ),
+  //                     //     //             isExpanded: true,
+  //                     //     //             hint: Text(
+  //                     //     //               'Select Location',
+  //                     //     //               overflow: TextOverflow.ellipsis,
+  //                     //     //               maxLines: 1,
+  //                     //     //               style: TextStyle(
+  //                     //     //                 color: Colors.grey,
+  //                     //     //                 fontSize: screenWidth * 0.035,
+  //                     //     //               ),
+  //                     //     //             ),
+  //                     //     //             value: _selectedLocation.isEmpty
+  //                     //     //                 ? null
+  //                     //     //                 : _selectedLocation,
+  //                     //     //             style: TextStyle(
+  //                     //     //               color: Colors.black,
+  //                     //     //               fontSize: screenWidth * 0.035,
+  //                     //     //             ),
+  //                     //     //             items:
+  //                     //     //                 _locations.keys.map((locationName) {
+  //                     //     //               return DropdownMenuItem<String>(
+  //                     //     //                 value: locationName,
+  //                     //     //                 child: Text(
+  //                     //     //                   locationName,
+  //                     //     //                   maxLines: 2,
+  //                     //     //                   overflow: TextOverflow.ellipsis,
+  //                     //     //                   softWrap: true,
+  //                     //     //                   style: TextStyle(
+  //                     //     //                     fontSize: screenWidth * 0.035,
+  //                     //     //                   ),
+  //                     //     //                 ),
+  //                     //     //               );
+  //                     //     //             }).toList(),
+  //                     //     //             onChanged: (value) async {
+  //                     //     //               if (value != null) {
+  //                     //     //                 setState(() {
+  //                     //     //                   _selectedLocation = value;
+  //                     //     //                   _selectedLocationCode =
+  //                     //     //                       _locations[value];
+  //                     //     //
+  //                     //     //                   log('Selected Location Code: $_selectedLocationCode');
+  //                     //     //                 });
+  //                     //     //
+  //                     //     //                 String jsonString = json.encode({
+  //                     //     //                   _selectedLocation:
+  //                     //     //                       _selectedLocationCode
+  //                     //     //                 });
+  //                     //     //                 await SharedPrefsHelper
+  //                     //     //                     .setLocationData(jsonString);
+  //                     //     //                 String? id = await SharedPrefsHelper
+  //                     //     //                     .getLocationData();
+  //                     //     //                 log(id.toString());
+  //                     //     //               } else {
+  //                     //     //                 setState(() {
+  //                     //     //                   _selectedLocation = '';
+  //                     //     //                   _selectedLocationCode = null;
+  //                     //     //                 });
+  //                     //     //                 await SharedPrefsHelper.removeKey(
+  //                     //     //                     'locationData');
+  //                     //     //               }
+  //                     //     //             },
+  //                     //     //           ),
+  //                     //     //         ),
+  //                     //     // ),
+  //                     //     // SizedBox(width: screenWidth * 0.02),
+  //                     //     // Device Registration Icons
+  //                     //     Expanded(
+  //                     //       flex: 1,
+  //                     //       child: InkWell(
+  //                     //         onTap: _registerOfficeDevice,
+  //                     //         child: Container(
+  //                     //           padding: EdgeInsets.all(screenWidth * 0.02),
+  //                     //           decoration: BoxDecoration(
+  //                     //             color: const Color(0xFF17a2b8),
+  //                     //             borderRadius: BorderRadius.circular(10),
+  //                     //           ),
+  //                     //           child: Icon(
+  //                     //             Icons.app_registration,
+  //                     //             color: Colors.white,
+  //                     //             size: screenWidth * 0.06,
+  //                     //           ),
+  //                     //         ),
+  //                     //       ),
+  //                     //     ),
+  //                     //   ],
+  //                     // ),
+  //
+  //                     SizedBox(height: screenHeight * 0.02),
+  //
+  //                     // Attendance Options
+  //                     Wrap(
+  //                       spacing: screenWidth * 0.03,
+  //                       runSpacing: screenHeight * 0.02,
+  //                       alignment: WrapAlignment.center,
+  //                       children: [
+  //                         _buildResponsiveButton(
+  //                           context,
+  //                           text: "Register Device",
+  //                           onPressed: () {
+  //                             _registerOfficeDevice();
+  //                           },
+  //                           color: const Color(0xFF17a2b8),
+  //                           icon: const Icon(Icons.app_registration),
+  //                           loader: _isRegisteringDevice,
+  //                         ),
+  //                         _buildResponsiveButton(
+  //                           context,
+  //                           text: 'Register User',
+  //                           onPressed: () {
+  //                             Navigator.pushNamed(
+  //                                 context, RegistrationScreen.routeName);
+  //                           },
+  //                           color: const Color(0xFF17a2b8),
+  //                           icon: const Icon(Icons.person_add_alt),
+  //                           width: screenWidth * 0.4,
+  //                           loader: false,
+  //                         ),
+  //                         _buildResponsiveButton(context,
+  //                             text: 'Manual Attendance', onPressed: () {
+  //                           Navigator.pushNamed(
+  //                               context, ManualAttendanceScreen.routeName);
+  //                         },
+  //                             color: const Color(0xFF17a2b8),
+  //                             icon: const Icon(Icons.assignment_ind),
+  //                             width: screenWidth * 0.4,
+  //                             loader: false),
+  //                         _buildResponsiveButton(context,
+  //                             text: 'Face Attendance', onPressed: () {
+  //                           Navigator.pushNamed(
+  //                               context, FaceRecognitionScreen.routeName);
+  //                         },
+  //                             color: const Color(0xFF17a2b8),
+  //                             icon: const Icon(Icons.face),
+  //                             width: screenWidth * 0.4,
+  //                             loader: false),
+  //                         _buildResponsiveButton(
+  //                           context,
+  //                           text: 'Finger Attendance',
+  //                           onPressed: () {
+  //                             Navigator.pushNamed(
+  //                                 context, FingerprintScannerScreen.routeName);
+  //                           },
+  //                           color: const Color(0xFF17a2b8),
+  //                           icon: const Icon(Icons.fingerprint),
+  //                           width: screenWidth * 0.4,
+  //                           loader: false,
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+// New responsive button method
+
 
   @override
   Widget build(BuildContext context) {
@@ -211,12 +455,13 @@ class _DashboardState extends State<Dashboard> {
         ),
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(
-            horizontal: screenWidth * 0.05,
+            horizontal: screenWidth * 0.05, // Reduced padding for responsiveness
             vertical: screenHeight * 0.02,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // The main card
               Card(
                 elevation: 10,
                 shape: RoundedRectangleBorder(
@@ -226,175 +471,95 @@ class _DashboardState extends State<Dashboard> {
                   padding: EdgeInsets.all(screenWidth * 0.05),
                   child: Column(
                     children: [
-                      // Location Dropdown with Registration Icons
+                      // Attendance Options with responsive button rows
+                      SizedBox(height: screenHeight * 0.02),
+
+                      // First row: Register Device & Register User
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Expanded(
-                            flex: 4,
-                            child: _locations.isEmpty
-                                ? Center(
-                                    child: Shimmer.fromColors(
-                                      baseColor: Colors.grey[300]!,
-                                      highlightColor: Colors.grey[100]!,
-                                      child: const Text(
-                                        'Loading...',
-                                        style: TextStyle(
-                                          fontSize: 28.0,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                : SizedBox(
-                                    height: 45,
-                                    child: DropdownButtonFormField<String>(
-                                      decoration: InputDecoration(
-                                        labelText: 'Select Location',
-                                        border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                        ),
-                                        constraints: BoxConstraints(
-                                          maxWidth: screenWidth * 0.9,
-                                        ),
-                                      ),
-                                      isExpanded: true,
-                                      hint: Text(
-                                        'Select Location',
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: screenWidth * 0.035,
-                                        ),
-                                      ),
-                                      value: _selectedLocation.isEmpty
-                                          ? null
-                                          : _selectedLocation,
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: screenWidth * 0.035,
-                                      ),
-                                      items:
-                                          _locations.keys.map((locationName) {
-                                        return DropdownMenuItem<String>(
-                                          value: locationName,
-                                          child: Text(
-                                            locationName,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            softWrap: true,
-                                            style: TextStyle(
-                                              fontSize: screenWidth * 0.035,
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                      onChanged: (value) async {
-                                        if (value != null) {
-                                          setState(() {
-                                            _selectedLocation = value;
-                                            _selectedLocationCode =
-                                                _locations[value];
-
-                                            log('Selected Location Code: $_selectedLocationCode');
-                                          });
-
-                                          String jsonString = json.encode({
-                                            _selectedLocation:
-                                                _selectedLocationCode
-                                          });
-                                          await SharedPrefsHelper
-                                              .setLocationData(jsonString);
-                                          String? id = await SharedPrefsHelper
-                                              .getLocationData();
-                                          log(id.toString());
-                                        } else {
-                                          setState(() {
-                                            _selectedLocation = '';
-                                            _selectedLocationCode = null;
-                                          });
-                                          await SharedPrefsHelper.removeKey(
-                                              'locationData');
-                                        }
-                                      },
-                                    ),
-                                  ),
+                          Flexible(
+                            child: _buildResponsiveButton(
+                              context,
+                              text: "Register Device",
+                              onPressed: () {
+                                _registerOfficeDevice();
+                              },
+                              color: const Color(0xFF17a2b8),
+                              icon: const Icon(Icons.app_registration),
+                              loader: _isRegisteringDevice,
+                              width: screenWidth * 0.4,
+                            ),
                           ),
-                          SizedBox(width: screenWidth * 0.02),
-                          // Device Registration Icons
-                          Expanded(
-                            flex: 1,
-                            child: InkWell(
-                              onTap: _registerOfficeDevice,
-                              child: Container(
-                                padding: EdgeInsets.all(screenWidth * 0.02),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF17a2b8),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Icon(
-                                  Icons.app_registration,
-                                  color: Colors.white,
-                                  size: screenWidth * 0.06,
-                                ),
-                              ),
+                          SizedBox(width: screenWidth * 0.05), // Spacer between buttons
+                          Flexible(
+                            child: _buildResponsiveButton(
+                              context,
+                              text: "Register User",
+                              onPressed: () {
+                                Navigator.pushNamed(context, RegistrationScreen.routeName);
+                              },
+                              color: const Color(0xFF17a2b8),
+                              icon: const Icon(Icons.person_add_alt),
+                              loader: false,
+                              width: screenWidth * 0.4,
                             ),
                           ),
                         ],
                       ),
+                      SizedBox(height: screenHeight * 0.02), // Spacing between rows
 
-                      SizedBox(height: screenHeight * 0.02),
-
-                      // Attendance Options
-                      Wrap(
-                        spacing: screenWidth * 0.03,
-                        runSpacing: screenHeight * 0.02,
-                        alignment: WrapAlignment.center,
+                      // Second row: Manual Attendance & Face Attendance
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _buildResponsiveButton(
-                            context,
-                            text: 'Register User',
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                  context, RegistrationScreen.routeName);
-                            },
-                            color: const Color(0xFF17a2b8),
-                            icon: const Icon(Icons.person_add_alt),
-                            width: screenWidth * 0.4,
+                          Flexible(
+                            child: _buildResponsiveButton(
+                              context,
+                              text: 'Manual Attendance',
+                              onPressed: () {
+                                Navigator.pushNamed(context, ManualAttendanceScreen.routeName);
+                              },
+                              color: const Color(0xFF17a2b8),
+                              icon: const Icon(Icons.assignment_ind),
+                              loader: false,
+                              width: screenWidth * 0.4,
+                            ),
                           ),
-                          _buildResponsiveButton(
-                            context,
-                            text: 'Manual Attendance',
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                  context, ManualAttendanceScreen.routeName);
-                            },
-                            color: const Color(0xFF17a2b8),
-                            icon: const Icon(Icons.assignment_ind),
-                            width: screenWidth * 0.4,
+                          SizedBox(width: screenWidth * 0.05), // Spacer between buttons
+                          Flexible(
+                            child: _buildResponsiveButton(
+                              context,
+                              text: 'Face Attendance',
+                              onPressed: () {
+                                Navigator.pushNamed(context, FaceRecognitionScreen.routeName);
+                              },
+                              color: const Color(0xFF17a2b8),
+                              icon: const Icon(Icons.face),
+                              loader: false,
+                              width: screenWidth * 0.4,
+                            ),
                           ),
-                          _buildResponsiveButton(
-                            context,
-                            text: 'Face Attendance',
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                  context, FaceRecognitionScreen.routeName);
-                            },
-                            color: const Color(0xFF17a2b8),
-                            icon: const Icon(Icons.face),
-                            width: screenWidth * 0.4,
-                          ),
-                          _buildResponsiveButton(
-                            context,
-                            text: 'Finger Attendance',
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                  context, FingerprintScannerScreen.routeName);
-                            },
-                            color: const Color(0xFF17a2b8),
-                            icon: const Icon(Icons.fingerprint),
-                            width: screenWidth * 0.4,
+                        ],
+                      ),
+                      SizedBox(height: screenHeight * 0.02), // Spacing between rows
+
+                      // Third row: Finger Attendance
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: _buildResponsiveButton(
+                              context,
+                              text: 'Finger Attendance',
+                              onPressed: () {
+                                Navigator.pushNamed(context, FingerprintScannerScreen.routeName);
+                              },
+                              color: const Color(0xFF17a2b8),
+                              icon: const Icon(Icons.fingerprint),
+                              loader: false,
+                              width: screenWidth * 0.4,
+                            ),
                           ),
                         ],
                       ),
@@ -409,7 +574,6 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-// New responsive button method
   Widget _buildResponsiveButton(
     BuildContext context, {
     required String text,
@@ -417,24 +581,29 @@ class _DashboardState extends State<Dashboard> {
     required Color color,
     required Icon icon,
     double? width,
+    required bool loader,
   }) {
     return SizedBox(
       width: width ?? MediaQuery.of(context).size.width * 0.4,
       child: ElevatedButton.icon(
         onPressed: onPressed,
-        icon: icon,
+        icon: loader ? SizedBox.shrink() : icon,
         label: FittedBox(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          child: loader
+              ? CircularProgressIndicator(
+                  color: Color(0xFF17a2b8),
+                )
+              : Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
         ),
         style: ElevatedButton.styleFrom(
           foregroundColor: Colors.white,
-          backgroundColor: color,
+          backgroundColor: loader ? Colors.grey : color,
           padding: EdgeInsets.symmetric(vertical: 12, horizontal: 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -443,44 +612,4 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
   }
-
-  // Widget _buildActionButton(
-  //   BuildContext context, {
-  //   required String text,
-  //   required VoidCallback onPressed,
-  //   required Color color,
-  //   required Icon icon,
-  // }) {
-  //   double screenWidth = MediaQuery.of(context).size.width;
-  //
-  //   return ElevatedButton(
-  //     style: ElevatedButton.styleFrom(
-  //       backgroundColor: color,
-  //       padding: EdgeInsets.symmetric(
-  //         vertical: 15,
-  //         horizontal: screenWidth * 0.001, // Responsive padding
-  //       ),
-  //       shape: RoundedRectangleBorder(
-  //         borderRadius: BorderRadius.circular(25),
-  //       ),
-  //       elevation: 5,
-  //     ),
-  //     onPressed: onPressed,
-  //     child: Row(
-  //       mainAxisSize: MainAxisSize.min,
-  //       children: [
-  //         icon,
-  //         SizedBox(width: screenWidth * 0.02), // Responsive spacing
-  //         Text(
-  //           text,
-  //           style: TextStyle(
-  //             fontSize: screenWidth * 0.023, // Responsive font size
-  //             color: Colors.white,
-  //             fontWeight: FontWeight.bold,
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 }
