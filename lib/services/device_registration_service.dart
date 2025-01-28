@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:developer';
 import '../constants.dart';
 import 'package:http/http.dart' as http;
+
+import '../models/device.dart';
 
 class DeviceRegistrationService {
   static const String baseUrl = baseURL;
@@ -71,6 +74,61 @@ class DeviceRegistrationService {
     } catch (e) {
       // Handle errors
       throw Exception('Error Registering Device: $e');
+    }
+  }
+
+
+  Future<Device?> checkIsRegisteredFromServer(String token) async {
+    try {
+      // Make the POST request
+      final response = await _client.post(
+        Uri.parse('$baseUrl/api/DeviceManagement/CheckDevice'),
+        headers: headers,
+        body: json.encode({'deviceToken': token}),
+      );
+
+      // Check if the response status code indicates success
+      if (response.statusCode == 200) {
+        // Parse the JSON response
+        final responseData = json.decode(response.body);
+
+        // Check if the response contains the required fields
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('isSuccess')) {
+          bool isSuccess = responseData['isSuccess'] ?? false;
+          String? errorMessage = responseData['errorMessage'];
+          String? successMessage = responseData['successMessage'];
+          dynamic content = responseData['content'];
+
+          if (isSuccess) {
+            // If the registration check is successful, parse the content into a Device object
+            if (content != null && content is Map<String, dynamic>) {
+              Device device = Device.fromJson(
+                  content); // Create Device from response content
+              log('Device registration check succeeded. Device: $device');
+              return device; // Return the device object
+            } else {
+              log('Device registration check succeeded but content is not a valid device object.');
+              return null;
+            }
+          } else {
+            // Log the failure message and return null
+            log('Device registration check failed. Error: $errorMessage');
+            return null;
+          }
+        } else {
+          log('Invalid response structure: $responseData');
+          throw Exception('Invalid response from server.');
+        }
+      } else {
+        // Handle non-200 status codes
+        log('Failed to check registration. Status code: ${response.statusCode}');
+        throw Exception('HTTP error: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle any errors or exceptions during the process
+      log('Error checking registration: $e');
+      rethrow; // Optionally rethrow the exception if needed
     }
   }
 }

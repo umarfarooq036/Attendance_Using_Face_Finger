@@ -506,9 +506,14 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton.icon(
-              onPressed: () {
+              onPressed: isActionInProgress
+                  ? null // Disable button when action is in progress
+                  : () {
                 if (_formKey.currentState!.validate()) {
-                  isActionInProgress ? null : () => pickImage('search');
+                  pickImage('search');
+                }
+                else{
+                  log('not validated');
                 }
               },
               icon: const Icon(

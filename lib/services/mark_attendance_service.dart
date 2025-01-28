@@ -38,16 +38,18 @@ class MarkAttendanceService {
   MarkAttendanceService({http.Client? client})
       : _client = client ?? http.Client();
 
-  Future<String?> markAttendance(String empId, String type,
-      {String? image = '', String attendanceType = ''}) async {
+  Future<String?> markAttendance(
+    String empId,
+    String type, {
+    String? image = '',
+    String? attendanceType,
+  }) async {
     await _initializeLocation();
     try {
       String? deviceToken = await SharedPrefsHelper.getDeviceToken();
       String? data = await SharedPrefsHelper.getLocationData();
       double? lat = await SharedPrefsHelper.getLatitude();
       double? long = await SharedPrefsHelper.getLongitude();
-
-      // empId =  SharedPrefsHelper.getEmployeeId().toString();
 
       var locationId;
 
@@ -74,20 +76,27 @@ class MarkAttendanceService {
         return 'Location ID is not available.';
       }
 
+      // Prepare the body for the request
+      var requestBody = {
+        "type": type,
+        "employeeId": int.parse(empId),
+        "locationId": locationId,
+        "lat": lat,
+        "long": long,
+        "deviceToken": deviceToken ?? '', // Ensure deviceToken is not null
+        "image": image,
+      };
+
+      // Add attendanceType to the request body if it's provided
+      if (attendanceType != null) {
+        requestBody["action"] = attendanceType;
+      }
+
       // Making the API request
       final response = await _client.post(
         Uri.parse('$baseUrl/api/MarkAttendence/MarkAttendence'),
         headers: headers,
-        body: json.encode({
-          "type": type,
-          "employeeId": empId,
-          "locationId": locationId,
-          "lat": lat,
-          "long": long,
-          "deviceToken": deviceToken ?? '', // Ensure deviceToken is not null
-          "image": image,
-          "action": attendanceType
-        }),
+        body: json.encode(requestBody),
       );
 
       // Check for response status code
