@@ -146,7 +146,8 @@ class _FingerprintScannerScreenState
           case 'mark_attendance':
             // log(call.arguments);
             // employeeId = call.arguments;
-            _identifyUser(call.arguments);
+            // _identifyUser(call.arguments);
+            Navigator.pop(context);
             break;
         }
       } catch (e) {
