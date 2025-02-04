@@ -235,50 +235,10 @@ class _FingerprintScannerScreenState
     }
   }
 
-  // Future<void> _registerUser() async {
-  //   // Validate input
-  //   if (!_validateInput()) return;
-  //
-  //   setState(() => _isLoading = true);
-  //
-  //   try {
-  //     // // Validate inputs and template
-  //     // if (template == null) {
-  //     //   _showErrorSnackBar('Please capture fingerprint template first');
-  //     //   return;
-  //     // }
-  //
-  //     final email = _empIdController.text.trim();
-  //     employeeId = await _apiService.getEmployeeId(email);
-  //
-  //     if (employeeId == null) {
-  //       _showErrorSnackBar('Could not retrieve employee ID');
-  //       return;
-  //     }
-  //
-  //     // Register user with template
-  //     final response = await _apiService.registerUser(
-  //       email: email,
-  //       fingerprintData: template!,
-  //     );
-  //
-  //     if (response['isSuccess']) {
-  //       _showSuccessSnackBar('User registered successfully');
-  //       _resetForm();
-  //     } else {
-  //       _showErrorSnackBar(response['errorMessage'] ?? 'Registration failed');
-  //     }
-  //   } catch (e) {
-  //     _showErrorSnackBar('Registration error: $e');
-  //   } finally {
-  //     setState(() => _isLoading = false);
-  //   }
-  // }
-
   Future<void> _registerUser() async {
-    if (!usersListRetrieved) {
-      await _startCapture();
-    }
+    // if (!usersListRetrieved) {
+    //   await _startCapture();
+    // }
     // if (!_validateInput()) return;
 
     // Optional: Device status check if needed
@@ -330,62 +290,6 @@ class _FingerprintScannerScreenState
       });
     }
   }
-
-  Future<void> _identifyUser(String empId) async {
-    log("identifying user log");
-    _checkDeviceStatus();
-    try {
-      // final String result = await platform.invokeMethod('identifyUser');
-      if (empId == null) {
-        return _showErrorSnackBar('Employee ID not found!');
-      }
-      final response = await _markAttendance.markAttendance(empId, 'Finger',
-          attendanceType: '');
-
-      if (response != null) {
-        _showSuccessSnackBar(response);
-      }
-      // else _showErrorSnackBar(response);
-
-      // setState(() {
-      //   _statusMessage = result;
-      // });fstar
-    } catch (e) {
-      _showErrorSnackBar('Identification failed: $e');
-    }
-  }
-
-  bool _validateInput() {
-    if (!_formKey.currentState!.validate()) {
-      return false;
-    }
-
-    // final email = _empIdController.text.trim();
-    //   if (!_isValidEmail(email)) {
-    //     _showErrorSnackBar('Invalid email format');
-    //     return false;
-    //   }
-    //
-    return true;
-  }
-
-  // for now the email validation is removed
-
-  // bool _isValidEmail(String email) {
-  //   final email_Regex = RegExp(emailRegex);
-  //   return email_Regex.hasMatch(email);
-  // }
-
-  // void _resetForm() {
-  //   setState(() {
-  //     _empIdController.clear();
-  //     images = ['', '', ''];
-  //     template = null;
-  //     Imageindex = 0;
-  //     _statusMessage = "Status: Waiting for action";
-  //     _fingerprintImage = null;
-  //   });
-  // }
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -509,68 +413,8 @@ class _FingerprintScannerScreenState
                             ),
                       const SizedBox(height: 20),
 
-                      // Employee ID Input (Commented out for now)
-                      // TextFormField(
-                      //   controller: _empIdController,
-                      //   decoration: InputDecoration(
-                      //     labelText: 'Employee ID',
-                      //     border: OutlineInputBorder(
-                      //       borderRadius: BorderRadius.circular(8.0),
-                      //     ),
-                      //     suffixIcon: const Icon(Icons.person),
-                      //   ),
-                      //   validator: (value) {
-                      //     if (value == null || value.isEmpty) {
-                      //       return 'Please Enter Your Employee ID';
-                      //     }
-                      //     return null;
-                      //   },
-                      // ),
                       const SizedBox(height: 20),
 
-                      // Action Buttons (Uncomment and customize if needed)
-                      // Wrap(
-                      //   spacing: 10,
-                      //   runSpacing: 10,
-                      //   children: [
-                      //     ElevatedButton(
-                      //       onPressed: _startCapture,
-                      //       style: ElevatedButton.styleFrom(
-                      //         backgroundColor: Colors.green,
-                      //         shape: RoundedRectangleBorder(
-                      //           borderRadius: BorderRadius.circular(8),
-                      //         ),
-                      //         padding: const EdgeInsets.symmetric(
-                      //             horizontal: 24, vertical: 12),
-                      //       ),
-                      //       child: const Text('Start Capture'),
-                      //     ),
-                      //     ElevatedButton(
-                      //       onPressed: _stopCapture,
-                      //       style: ElevatedButton.styleFrom(
-                      //         backgroundColor: Colors.redAccent,
-                      //         shape: RoundedRectangleBorder(
-                      //           borderRadius: BorderRadius.circular(8),
-                      //         ),
-                      //         padding: const EdgeInsets.symmetric(
-                      //             horizontal: 24, vertical: 12),
-                      //       ),
-                      //       child: const Text('Stop Capture'),
-                      //     ),
-                      //     ElevatedButton(
-                      //       onPressed: () => _registerUser(),
-                      //       style: ElevatedButton.styleFrom(
-                      //         backgroundColor: Colors.blue,
-                      //         shape: RoundedRectangleBorder(
-                      //           borderRadius: BorderRadius.circular(8),
-                      //         ),
-                      //         padding: const EdgeInsets.symmetric(
-                      //             horizontal: 24, vertical: 12),
-                      //       ),
-                      //       child: const Text('Register User'),
-                      //     ),
-                      //   ],
-                      // ),
                     ],
                   ),
                 ),
@@ -582,154 +426,387 @@ class _FingerprintScannerScreenState
     );
   }
 
-// @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     appBar: AppBar(
-  //       title: const Text('Fingerprint Scanner'),
-  //       backgroundColor: const Color(0xFF17a2b8),
-  //     ),
-  //     body: RefreshIndicator(
-  //       onRefresh: _refresh,
-  //       child: SingleChildScrollView(
-  //         child: Form(
-  //           key: _formKey,
-  //           child: Padding(
-  //             padding: const EdgeInsets.all(16.0),
-  //             child: Column(
-  //               crossAxisAlignment: CrossAxisAlignment.stretch,
-  //               children: [
-  //                 // Fingerprint Image Display
-  //                 _fingerprintImage != null
-  //                     ? Container(
-  //                         height: 200,
-  //                         decoration: BoxDecoration(
-  //                           borderRadius: BorderRadius.circular(12),
-  //                           border: Border.all(color: Colors.grey.shade300),
-  //                         ),
-  //                         child: Image.memory(_fingerprintImage!),
-  //                       )
-  //                     : Container(
-  //                         height: 200,
-  //                         decoration: BoxDecoration(
-  //                           color: Colors.grey[200],
-  //                           borderRadius: BorderRadius.circular(12),
-  //                         ),
-  //                         child: Center(
-  //                           child: Text(
-  //                             'Fingerprint Image',
-  //                             style: TextStyle(color: Colors.grey.shade600),
-  //                           ),
-  //                         ),
-  //                       ),
-  //                 const SizedBox(height: 20),
-  //
-  //                 // Status Message
-  //                 _isLoading
-  //                     ? Center(
-  //                         child: Shimmer.fromColors(
-  //                           baseColor: Colors.grey[300]!,
-  //                           highlightColor: Colors.grey[100]!,
-  //                           child: const Text(
-  //                             'Loading...',
-  //                             style: TextStyle(
-  //                               fontSize: 28.0,
-  //                               fontWeight: FontWeight.bold,
-  //                             ),
-  //                           ),
-  //                         ),
-  //                       )
-  //                     : Text(
-  //                         _statusMessage,
-  //                         textAlign: TextAlign.center,
-  //                         style: const TextStyle(
-  //                           fontSize: 16,
-  //                           color: Colors.blueGrey,
-  //                           fontWeight: FontWeight.w500,
-  //                         ),
-  //                       ),
-  //                 const SizedBox(height: 20),
-  //
-  //                 // Employee ID Input
-  //                 TextFormField(
-  //                   controller: _empIdController,
-  //                   decoration: InputDecoration(
-  //                     labelText: 'Employee ID',
-  //                     border: OutlineInputBorder(
-  //                       borderRadius: BorderRadius.circular(8.0),
-  //                     ),
-  //                     suffixIcon: const Icon(Icons.person),
-  //                   ),
-  //                   validator: (value) {
-  //                     if (value == null || value.isEmpty) {
-  //                       return 'Please Enter Your Employee ID';
-  //                     }
-  //                     return null;
-  //                   },
-  //                 ),
-  //                 const SizedBox(height: 20),
-  //
-  //                 // Action Buttons
-  //                 // Wrap(
-  //                 //   spacing: 10,
-  //                 //   runSpacing: 10,
-  //                 //   children: [
-  //                 //     ElevatedButton(
-  //                 //       onPressed: _startCapture,
-  //                 //       style: ElevatedButton.styleFrom(
-  //                 //         backgroundColor: Colors.green,
-  //                 //         shape: RoundedRectangleBorder(
-  //                 //           borderRadius: BorderRadius.circular(8),
-  //                 //         ),
-  //                 //         padding: const EdgeInsets.symmetric(
-  //                 //             horizontal: 24, vertical: 12),
-  //                 //       ),
-  //                 //       child: const Text('Start Capture'),
-  //                 //     ),
-  //                 //     ElevatedButton(
-  //                 //       onPressed: _stopCapture,
-  //                 //       style: ElevatedButton.styleFrom(
-  //                 //         backgroundColor: Colors.redAccent,
-  //                 //         shape: RoundedRectangleBorder(
-  //                 //           borderRadius: BorderRadius.circular(8),
-  //                 //         ),
-  //                 //         padding: const EdgeInsets.symmetric(
-  //                 //             horizontal: 24, vertical: 12),
-  //                 //       ),
-  //                 //       child: const Text('Stop Capture'),
-  //                 //     ),
-  //                 //     ElevatedButton(
-  //                 //       onPressed: () => _registerUser(),
-  //                 //       style: ElevatedButton.styleFrom(
-  //                 //         backgroundColor: Colors.blue,
-  //                 //         shape: RoundedRectangleBorder(
-  //                 //           borderRadius: BorderRadius.circular(8),
-  //                 //         ),
-  //                 //         padding: const EdgeInsets.symmetric(
-  //                 //             horizontal: 24, vertical: 12),
-  //                 //       ),
-  //                 //       child: const Text('Register User'),
-  //                 //     ),
-  //                 //     // ElevatedButton(
-  //                 //     //   onPressed: _identifyUser,
-  //                 //     //   style: ElevatedButton.styleFrom(
-  //                 //     //     backgroundColor: Colors.orange,
-  //                 //     //     shape: RoundedRectangleBorder(
-  //                 //     //       borderRadius: BorderRadius.circular(8),
-  //                 //     //     ),
-  //                 //     //     padding: const EdgeInsets.symmetric(
-  //                 //     //         horizontal: 24, vertical: 12),
-  //                 //     //   ),
-  //                 //     //   child: const Text('Identify User'),
-  //                 //     // ),
-  //                 //   ],
-  //                 // ),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 }
+
+// import 'dart:convert';
+// import 'dart:developer';
+// import 'dart:typed_data';
+//
+// import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
+// import 'package:shimmer/shimmer.dart';
+//
+// import '../../services/fingerPrint_apiService.dart';
+// import '../../services/mark_attendance_service.dart';
+//
+// class FingerprintRegistrationScreen extends StatefulWidget {
+//   static String routeName = '/fingerRegisterScreen';
+//
+//   const FingerprintRegistrationScreen({Key? key}) : super(key: key);
+//
+//   @override
+//   _FingerprintRegistrationScreenState createState() =>
+//       _FingerprintRegistrationScreenState();
+// }
+//
+// class _FingerprintRegistrationScreenState
+//     extends State<FingerprintRegistrationScreen> {
+//   // Core Controllers and Services
+//   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+//   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+//   static const platform = MethodChannel('zkfingerprint_channel');
+//
+//   final FingerFaceApiService _apiService = FingerFaceApiService();
+//   final MarkAttendanceService _markAttendance = MarkAttendanceService();
+//   final TextEditingController _empIdController = TextEditingController();
+//
+//   // State Management Variables
+//   bool _isDeviceInitialized = false;
+//   bool _isLoading = false;
+//   String _statusMessage = "Status: Waiting for Initialization";
+//
+//   // Fingerprint Specific Variables
+//   Uint8List? _fingerprintImage;
+//   List<String> images = ['', '', ''];
+//   String? template;
+//   int imageIndex = 0;
+//   int? employeeId;
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _initMethodChannelHandler();
+//
+//     // Post-frame callback for initialization
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       _initializeDeviceAndUser();
+//     });
+//   }
+//
+//   void _initMethodChannelHandler() {
+//     platform.setMethodCallHandler((call) async {
+//       try {
+//         switch (call.method) {
+//           case 'updateImage':
+//             _handleImageUpdate(call.arguments);
+//             break;
+//           case 'updateTemplate':
+//             _handleTemplateUpdate(call.arguments);
+//             break;
+//           case 'db_canAddFinger':
+//             return await _handleCanAddFinger(call.arguments);
+//           case 'db_insertUser':
+//             return await _handleUserInsertion(call.arguments);
+//           case 'db_getUserList':
+//             return await _handleGetUserList();
+//         }
+//       } catch (e) {
+//         _showErrorSnackBar('Method Handler Error: $e');
+//       }
+//     });
+//   }
+//
+//   Future<Map<String, dynamic>> _handleCanAddFinger(dynamic arguments) async {
+//     setState(() => _isLoading = true);
+//     try {
+//       final response = await _apiService.canAddFingerprint(arguments['empId']);
+//       return response.toMap();
+//     } finally {
+//       setState(() => _isLoading = false);
+//     }
+//   }
+//
+//   Future<Map<String, dynamic>> _handleUserInsertion(dynamic arguments) async {
+//     setState(() => _isLoading = true);
+//     try {
+//       final responseBody = await _apiService.registerUser(
+//         employeeId: arguments['empId'],
+//         fingerprintData: arguments['template'],
+//         images: images,
+//       );
+//
+//       if (responseBody['isSuccess']) {
+//         _showSuccessSnackBar('User registered successfully');
+//         Navigator.pop(context);
+//       } else {
+//         _showErrorSnackBar(responseBody['errorMessage']);
+//       }
+//       return responseBody;
+//     } finally {
+//       setState(() => _isLoading = false);
+//     }
+//   }
+//
+//   Future<Map<String, dynamic>> _handleGetUserList() async {
+//     setState(() => _isLoading = true);
+//     try {
+//       final response = await _apiService.getUserList();
+//       final isSuccess = response.data['isSuccess'];
+//
+//       isSuccess
+//           ? _showSuccessSnackBar('User list retrieved successfully')
+//           : _showErrorSnackBar(
+//               response.data['errorMessage'] ?? 'Unable to fetch users list!');
+//
+//       return response.toMap();
+//     } finally {
+//       setState(() => _isLoading = false);
+//     }
+//   }
+//
+//   Future<void> _initializeDeviceAndUser() async {
+//     // Prevent multiple initialization
+//     // if (_isDeviceInitialized) return;
+//
+//     setState(() {
+//       _isLoading = true;
+//       _statusMessage = "Initializing Device...";
+//     });
+//
+//     try {
+//       // 1. Check Device Status
+//       final isDeviceReady = await _checkDeviceStatus();
+//       // if (!isDeviceReady) {
+//       //   throw Exception('Fingerprint device is not ready');
+//       // }
+//
+//       // 2. Start Capture Process
+//       final captureStarted = await _startCaptureProcess();
+//       if (!captureStarted) {
+//         throw Exception('Failed to start fingerprint capture');
+//       }
+//
+//       // 3. Fetch and Set Employee ID
+//       final arguments = ModalRoute.of(context)!.settings.arguments;
+//       if (arguments != null && arguments is String) {
+//         _empIdController.text = arguments;
+//
+//         // Verify Employee ID
+//         final employeeId = await _apiService.getEmployeeId(context, arguments);
+//         if (employeeId == null) {
+//           throw Exception('Invalid Employee ID');
+//         }
+//
+//         // Mark initialization complete
+//         setState(() {
+//           _isDeviceInitialized = true;
+//           _statusMessage = 'Device Ready for Fingerprint Registration';
+//         });
+//       } else {
+//         throw Exception('No Employee Information Provided');
+//       }
+//     } catch (e) {
+//       _handleInitializationError(e);
+//     } finally {
+//       setState(() {
+//         _isLoading = false;
+//       });
+//     }
+//   }
+//
+//   Future<bool> _checkDeviceStatus() async {
+//     try {
+//       final result = await platform.invokeMethod('checkDeviceStatus');
+//       return result == true;
+//     } catch (e) {
+//       log('Device Status Check Failed: $e');
+//       return false;
+//     }
+//   }
+//
+//   Future<bool> _startCaptureProcess() async {
+//     try {
+//       final result = await platform.invokeMethod('startCapture');
+//       setState(() {
+//         _statusMessage = result ? 'Capture Started!' : 'Capture Start Failed';
+//       });
+//       return result == true;
+//     } catch (e) {
+//       log('Capture Process Failed: $e');
+//       return false;
+//     }
+//   }
+//
+//   void _handleImageUpdate(dynamic imageData) {
+//     if (imageData != null) {
+//       setState(() {
+//         _fingerprintImage = imageData;
+//         images[imageIndex] = base64Encode(_fingerprintImage!);
+//         _statusMessage = "Fingerprint image ${imageIndex + 1} captured!";
+//         imageIndex = (imageIndex + 1) % 3;
+//       });
+//
+//       // Auto-clear image after 3 seconds
+//       Future.delayed(Duration(seconds: 3), () {
+//         if (mounted) {
+//           setState(() {
+//             _fingerprintImage = null;
+//             _statusMessage = "Status: Waiting for action";
+//           });
+//         }
+//       });
+//     }
+//   }
+//
+//   void _handleTemplateUpdate(dynamic templateData) {
+//     if (templateData != null && templateData['base64'] != null) {
+//       setState(() {
+//         template = templateData['base64'];
+//         _statusMessage = templateData['result'];
+//       });
+//     }
+//   }
+//
+//   void _handleInitializationError(Object error) {
+//     String errorMessage = 'Initialization Failed';
+//
+//     if (error is Exception) {
+//       errorMessage = error.toString().replaceFirst('Exception: ', '');
+//     }
+//
+//     _showErrorSnackBar(errorMessage);
+//
+//     log('Initialization Error: $error');
+//
+//     setState(() {
+//       _isDeviceInitialized = false;
+//       _statusMessage = 'Device Initialization Failed';
+//     });
+//   }
+//
+//   void _showErrorSnackBar(String message) {
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(
+//         content: Text(message),
+//         backgroundColor: Colors.red,
+//         duration: const Duration(seconds: 3),
+//       ),
+//     );
+//   }
+//
+//   void _showSuccessSnackBar(String message) {
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(
+//         content: Text(message),
+//         backgroundColor: Colors.green,
+//         duration: const Duration(seconds: 3),
+//       ),
+//     );
+//   }
+//
+//   @override
+//   void dispose() {
+//     _empIdController.dispose();
+//     _stopCaptureSafely();
+//     super.dispose();
+//   }
+//
+//   Future<void> _stopCaptureSafely() async {
+//     try {
+//       await platform.invokeMethod('stopCapture');
+//     } catch (e) {
+//       debugPrint('Error stopping capture: $e');
+//     }
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return RefreshIndicator(
+//       onRefresh: _startCaptureProcess,
+//       child: Scaffold(
+//         key: _scaffoldKey,
+//         appBar: AppBar(
+//           title: const Text('Fingerprint Registration'),
+//           backgroundColor: const Color(0xFF17a2b8),
+//         ),
+//         body: Container(
+//           decoration: BoxDecoration(
+//             gradient: LinearGradient(
+//               colors: [Color(0xFFE0F7FA), Color(0xFF80DEEA)],
+//               begin: Alignment.topLeft,
+//               end: Alignment.bottomRight,
+//             ),
+//           ),
+//           child: ListView(
+//             padding: const EdgeInsets.all(16.0),
+//             children: [
+//               Card(
+//                 elevation: 5,
+//                 shape: RoundedRectangleBorder(
+//                   borderRadius: BorderRadius.circular(12),
+//                 ),
+//                 child: Padding(
+//                   padding: const EdgeInsets.all(16.0),
+//                   child: Column(
+//                     crossAxisAlignment: CrossAxisAlignment.stretch,
+//                     children: [
+//                       // Fingerprint Image Display
+//                       _buildFingerprintImageDisplay(),
+//
+//                       const SizedBox(height: 20),
+//
+//                       // Status Message
+//                       _buildStatusMessage(),
+//
+//                       const SizedBox(height: 20),
+//                     ],
+//                   ),
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+//
+//   Widget _buildFingerprintImageDisplay() {
+//     return _fingerprintImage != null
+//         ? Container(
+//             height: 200,
+//             decoration: BoxDecoration(
+//               borderRadius: BorderRadius.circular(12),
+//               border: Border.all(color: Colors.grey.shade300),
+//             ),
+//             child: Image.memory(_fingerprintImage!),
+//           )
+//         : Container(
+//             height: 200,
+//             decoration: BoxDecoration(
+//               color: Colors.grey[200],
+//               borderRadius: BorderRadius.circular(12),
+//             ),
+//             child: Center(
+//                 child: Image.asset(
+//               'assets/images/fingerprint-scan.png',
+//               fit: BoxFit.cover,
+//             )),
+//           );
+//   }
+//
+//   Widget _buildStatusMessage() {
+//     return _isLoading
+//         ? Center(
+//             child: Shimmer.fromColors(
+//               baseColor: Colors.grey[300]!,
+//               highlightColor: Colors.grey[100]!,
+//               child: const Text(
+//                 'Loading...',
+//                 style: TextStyle(
+//                   fontSize: 28.0,
+//                   fontWeight: FontWeight.bold,
+//                 ),
+//               ),
+//             ),
+//           )
+//         : Text(
+//             _statusMessage,
+//             textAlign: TextAlign.center,
+//             style: const TextStyle(
+//               fontSize: 16,
+//               color: Colors.blueGrey,
+//               fontWeight: FontWeight.w500,
+//             ),
+//           );
+//   }
+// }

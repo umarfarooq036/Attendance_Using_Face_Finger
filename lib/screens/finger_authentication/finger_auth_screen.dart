@@ -1071,7 +1071,9 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
     }
   }
 
-  Future<void> _refresh() async {}
+  Future<void> _refresh() async {
+    _readyDevice();
+  }
 
   Widget _buildActionTypes() {
     return Padding(
