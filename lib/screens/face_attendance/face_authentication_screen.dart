@@ -39,7 +39,7 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
   String? faceId;
   String? imageId;
 
-  String? _selectedValue = attendanceTypes.first.keys.first;
+  // String? _selectedValue = attendanceTypes.first.keys.first;
 
   final MarkAttendanceService _markAttendance = MarkAttendanceService();
 
@@ -50,6 +50,8 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
   // ================ Local Variables ================
   final FingerFaceApiService _apiService = FingerFaceApiService();
   static int? employeeId;
+  String? validationMessage;
+  String? selectedOption;
 
   // ================ Lifecycle Methods ================
   @override
@@ -285,9 +287,7 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
     return null;
   }
 
-  Future<rekognition.IndexFacesResponse?> _indexFaces(
-      String imagePath, String userName) async {
-    String sanitizedName = userName.trim().replaceAll(' ', '_');
+  Future<rekognition.IndexFacesResponse?> _indexFaces(String imagePath, String userName) async { String sanitizedName = userName.trim().replaceAll(' ', '_');
     _setLoading(true);
 
     try {
@@ -348,7 +348,7 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
               matchedFace.externalImageId!); //to get the employee ID.
           final response = await _markAttendance.markAttendance(
               employeeId.toString(), 'Face',
-              attendanceType: _selectedValue!);
+              attendanceType: selectedOption);
 
           if (response != null) {
             _showSnackBar(response, type: SnackBarType.success);
@@ -412,6 +412,27 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
     }
   }
 
+
+
+  bool _validateSelection() {
+    // setState(() {
+    if (selectedOption == null || selectedOption!.isEmpty) {
+      setState(() {
+        validationMessage = "Please select at least one option.";
+      });
+      return false;
+    } else {
+      setState(() {
+        validationMessage = null;
+      });
+      return true;
+    }
+
+    validationMessage =
+    selectedOption == null ? "Please select at least one option." : null;
+    // });
+  }
+
 // ================ UI Widgets ================
 
 // Image Preview with Rounded Corners
@@ -441,65 +462,171 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
           ),
         );
 
+  // Widget _buildActionTypes() {
+  //   return Padding(
+  //     padding: const EdgeInsets.all(8.0),
+  //     child: Container(
+  //       padding: EdgeInsets.symmetric(horizontal: 16.0),
+  //       decoration: BoxDecoration(
+  //         color: Colors.white,
+  //         border: Border.all(color: Colors.teal[700]!, width: 1.5),
+  //         borderRadius: BorderRadius.circular(8.0),
+  //       ),
+  //       child: DropdownButtonFormField<String>(
+  //         isExpanded: true,
+  //         value: _selectedValue,
+  //         decoration: InputDecoration(
+  //           labelText: 'Attendance Type',
+  //           hintText: 'Select Attendance Type',
+  //           labelStyle: TextStyle(
+  //             color: Colors.teal[700],
+  //             fontWeight: FontWeight.w600,
+  //           ),
+  //           hintStyle: TextStyle(
+  //             color: Colors.teal[400],
+  //           ),
+  //           border: InputBorder.none,
+  //         ),
+  //         icon: Icon(Icons.arrow_drop_down, color: Colors.teal[700]),
+  //         dropdownColor: Colors.white,
+  //         items: attendanceTypes.map((type) {
+  //           String key = type.keys.first;
+  //           return DropdownMenuItem<String>(
+  //             value: key,
+  //             child: Text(
+  //               key,
+  //               style: TextStyle(
+  //                 color: Colors.teal[900],
+  //                 fontWeight: FontWeight.w600,
+  //               ),
+  //             ),
+  //           );
+  //         }).toList(),
+  //         onChanged: (newValue) {
+  //           setState(() {
+  //             _selectedValue = newValue;
+  //             log(newValue!);
+  //           });
+  //         },
+  //         validator: (value) {
+  //           // Ensure the user doesn't select the default placeholder
+  //           if (value == null || value == 'Please Select') {
+  //             return 'Please select a valid attendance type';
+  //           }
+  //           return null;
+  //         },
+  //       ),
+  //     ),
+  //   );
+  // }
+
+// Modern Action Buttons with Elevated Design
+
   Widget _buildActionTypes() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: Colors.teal[700]!, width: 1.5),
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: DropdownButtonFormField<String>(
-          isExpanded: true,
-          value: _selectedValue,
-          decoration: InputDecoration(
-            labelText: 'Attendance Type',
-            hintText: 'Select Attendance Type',
-            labelStyle: TextStyle(
-              color: Colors.teal[700],
-              fontWeight: FontWeight.w600,
-            ),
-            hintStyle: TextStyle(
-              color: Colors.teal[400],
-            ),
-            border: InputBorder.none,
-          ),
-          icon: Icon(Icons.arrow_drop_down, color: Colors.teal[700]),
-          dropdownColor: Colors.white,
-          items: attendanceTypes.map((type) {
-            String key = type.keys.first;
-            return DropdownMenuItem<String>(
-              value: key,
-              child: Text(
-                key,
+    List<String> keys = attendanceOptions.keys.toList();
+
+    return Container(
+      padding: EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.teal[700]!, width: 1.5),
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Select Attendance Type',
                 style: TextStyle(
-                  color: Colors.teal[900],
+                  color: Colors.teal[700],
                   fontWeight: FontWeight.w600,
+                  fontSize: 16,
                 ),
               ),
-            );
-          }).toList(),
-          onChanged: (newValue) {
-            setState(() {
-              _selectedValue = newValue;
-              log(newValue!);
-            });
-          },
-          validator: (value) {
-            // Ensure the user doesn't select the default placeholder
-            if (value == null || value == 'Please Select') {
-              return 'Please select a valid attendance type';
-            }
-            return null;
-          },
-        ),
+            ],
+          ),
+          SizedBox(height: 4.0),
+          Column(
+            children: [
+              for (int i = 0; i < keys.length; i += 2)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: RadioListTile<String>(
+                        visualDensity: const VisualDensity(horizontal: -4.0),
+                        toggleable: true,
+                        enableFeedback: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          keys[i],
+                          style: TextStyle(
+                            color: Colors.teal[900],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        value: attendanceOptions[keys[i]] ?? '',
+                        groupValue: selectedOption,
+                        onChanged: (String? value) {
+                          setState(() {
+                            selectedOption = value;
+                            validationMessage = null;
+                          });
+                        },
+                        activeColor: Colors.teal[700],
+                      ),
+                    ),
+                    if (i + 1 < keys.length)
+                      Flexible(
+                        child: RadioListTile<String>(
+                          visualDensity: const VisualDensity(horizontal: -4.0),
+                          toggleable: true,
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            keys[i + 1],
+                            style: TextStyle(
+                              color: Colors.teal[900],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          value: attendanceOptions[keys[i + 1]] ?? '',
+                          groupValue: selectedOption,
+                          onChanged: (String? value) {
+                            setState(() {
+                              selectedOption = value;
+                              validationMessage = null;
+                              log(value.toString());
+                            });
+                          },
+                          activeColor: Colors.teal[700],
+                        ),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+          if (validationMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                validationMessage!,
+                style:
+                TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+              ),
+            ),
+          // SizedBox(height: 8.0),
+          // ElevatedButton(
+          //   onPressed: _validateSelection,
+          //   child: Text("Submit"),
+          // ),
+        ],
       ),
     );
   }
 
-// Modern Action Buttons with Elevated Design
   Widget _buildActionButtons() => Padding(
         padding: const EdgeInsets.symmetric(vertical: 20),
         child: Row(
@@ -509,6 +636,10 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
               onPressed: isActionInProgress
                   ? null // Disable button when action is in progress
                   : () {
+                final isSelected = _validateSelection();
+                if (!isSelected) {
+                  return;
+                }
                 if (_formKey.currentState!.validate()) {
                   pickImage('search');
                 }

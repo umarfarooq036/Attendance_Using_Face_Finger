@@ -29,6 +29,7 @@ class _FingerprintScannerScreenState
   String _statusMessage = "Status: Waiting for action";
   Uint8List? _fingerprintImage;
   bool _isLoading = false;
+  bool _isCapturing = false;
 
   // Fingerprint Data Storage
   List<String> images = ['', '', '']; // Three image slots
@@ -65,12 +66,12 @@ class _FingerprintScannerScreenState
   }
 
   Future<void> _refresh() async {
-    if (usersListRetrieved) {
-      await _registerUser();
-    } else {
-      initState();
-      // _readyDevice();
-    }
+    // if (usersListRetrieved) {
+    //   await _registerUser();
+    // } else {
+      // initState();
+      _readyDevice();
+    // }
   }
 
   void _initMethodChannelHandler() {
@@ -215,6 +216,7 @@ class _FingerprintScannerScreenState
           _statusMessage = 'Capture Started!';
         });
       } else {
+
         setState(() {
           _statusMessage = 'Please Start Capture Again!';
         });
@@ -223,6 +225,47 @@ class _FingerprintScannerScreenState
       _showErrorSnackBar('Start capture failed: $e');
     }
   }
+
+
+  // The start capture method that uses the global variable _isCapturing
+  // Future<void> _startCapture() async {
+  //   // If capture is already in progress, don't start a new one.
+  //   if (_isCapturing) {
+  //     print('Capture already in progress.');
+  //     return;
+  //   }
+  //
+  //   while (!_isCapturing) {
+  //     try {
+  //       // Attempt to start capture via platform method.
+  //       final result = await platform.invokeMethod('startCapture');
+  //
+  //       if (result) {
+  //         // Capture started successfully. Update state and mark capture as started.
+  //         setState(() {
+  //           _statusMessage = 'Capture Started!';
+  //         });
+  //         _isCapturing = true;
+  //       } else {
+  //         // Device not connected; perform cleanup and update UI.
+  //         // _stopCaptureSafely();
+  //         setState(() {
+  //           _statusMessage = 'Device not connected. Trying again...';
+  //         });
+  //         // Wait a bit before trying again.
+  //         await Future.delayed(Duration(seconds: 2));
+  //       }
+  //     } catch (e) {
+  //       // An error occurred. Safely stop capture and show an error message.
+  //       _stopCaptureSafely();
+  //       _showErrorSnackBar('Start capture failed: $e');
+  //       // Optionally exit the loop on error:
+  //       break;
+  //     }
+  //   }
+  // }
+
+
 
   Future<void> _stopCapture() async {
     try {
@@ -325,6 +368,7 @@ class _FingerprintScannerScreenState
 
   Future<void> _stopCaptureSafely() async {
     try {
+      _isCapturing = false;
       // Safely stop the capture using the platform channel
       await platform.invokeMethod('stopCapture');
     } catch (e) {

@@ -1719,15 +1719,25 @@ public class MainActivity extends FlutterFragmentActivity {
             return false;
         }
 
-        UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
-        if (usbManager.hasPermission(usbDevice)) {
+//        UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+//        if (usbManager.hasPermission(usbDevice)) {
+//            openDevice();
+//            return true;
+//        } else {
+//            PendingIntent permissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(USB_PERMISSION_ACTION), PendingIntent.FLAG_IMMUTABLE);
+//            usbManager.requestPermission(usbDevice, permissionIntent);
+//            openDevice();
+//            return false;
+//        }
+
+            UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+            if (!usbManager.hasPermission(usbDevice)) {
+                Intent permissionIntent = new Intent(USB_PERMISSION_ACTION);
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, permissionIntent, PendingIntent.FLAG_IMMUTABLE);
+                usbManager.requestPermission(usbDevice, pendingIntent);
+            }
             openDevice();
-            return true;
-        } else {
-            PendingIntent permissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(USB_PERMISSION_ACTION), PendingIntent.FLAG_IMMUTABLE);
-            usbManager.requestPermission(usbDevice, permissionIntent);
-            return false;
-        }
+            return usbManager.hasPermission(usbDevice);
     }
 
     private void stopCapture() {
@@ -1743,7 +1753,7 @@ public class MainActivity extends FlutterFragmentActivity {
 
         try {
         createFingerprintSensor();
-        loadAllTemplatesFromDB();
+//        loadAllTemplatesFromDB();
         bRegister = false;
         enroll_index = 0;
         isReseted = false;
@@ -1754,7 +1764,10 @@ public class MainActivity extends FlutterFragmentActivity {
             fingerprintSensor.SetFingerprintExceptionListener(fingerprintExceptionListener);
             fingerprintSensor.startCapture(deviceIndex);
             bStarted = true;
+
             showToast("Device connected successfully");
+            loadAllTemplatesFromDB();
+
         } catch (Exception e) {
             Log.e(TAG, "Device Open Error in Release Mode", e);
             // Send detailed error to Flutter
