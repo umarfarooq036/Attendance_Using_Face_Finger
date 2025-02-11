@@ -1018,8 +1018,6 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
     }
   }
 
-
-
   bool _validateSelection() {
     // setState(() {
     if (selectedOption == null || selectedOption!.isEmpty) {
@@ -1035,10 +1033,9 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
     }
 
     validationMessage =
-    selectedOption == null ? "Please select at least one option." : null;
+        selectedOption == null ? "Please select at least one option." : null;
     // });
   }
-
 
   bool _validateInput() {
     final isSelected = _validateSelection();
@@ -1064,6 +1061,8 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
         content: Text(message),
         backgroundColor: Colors.red,
         duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+
       ),
     );
   }
@@ -1074,6 +1073,7 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
         content: Text(message),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -1196,7 +1196,7 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
               child: Text(
                 validationMessage!,
                 style:
-                TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
               ),
             ),
           // SizedBox(height: 8.0),
@@ -1247,7 +1247,8 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
                                 height: 200,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  border:
+                                      Border.all(color: Colors.grey.shade300),
                                 ),
                                 child: Image.memory(_fingerprintImage!),
                               )
