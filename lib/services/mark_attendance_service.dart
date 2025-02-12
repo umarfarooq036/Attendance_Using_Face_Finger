@@ -77,7 +77,7 @@ class MarkAttendanceService {
       }
 
       // Prepare the body for the request
-      var requestBody = {
+      var requestBody =  {
         "type": type,
         "employeeId": int.parse(empId),
         "locationId": locationId,

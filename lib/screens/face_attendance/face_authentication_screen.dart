@@ -97,7 +97,7 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
   }
 
   void _showSnackBar(String message, {SnackBarType type = SnackBarType.info}) {
-    SnackbarHelper.showSnackBar(context, message, type: type);
+    SnackbarHelper.showSnackBar(context, message, type: type , duration: Duration(seconds: 4));
   }
 
   // ================ Image Handling ================

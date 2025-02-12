@@ -1060,7 +1060,7 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 5),
         behavior: SnackBarBehavior.floating,
 
       ),
@@ -1072,7 +1072,7 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.green,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 5),
         behavior: SnackBarBehavior.floating,
       ),
     );
