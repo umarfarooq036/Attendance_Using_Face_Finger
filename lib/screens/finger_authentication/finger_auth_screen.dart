@@ -1005,10 +1005,11 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
         attendanceType: selectedOption,
       );
 
-      if (response != null) {
-        _showSuccessSnackBar(response);
+      if (response['isSuccess'] == true) {
+        _showSuccessSnackBar(response['message']);
+      } else {
+        _showErrorSnackBar(response['message']);
       }
-      // else _showErrorSnackBar(response);
 
       // setState(() {
       //   _statusMessage = result;
@@ -1059,10 +1060,9 @@ class _FingerprintScannerScreenState extends State<FingerprintScannerScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.redAccent,
         duration: const Duration(seconds: 5),
         behavior: SnackBarBehavior.floating,
-
       ),
     );
   }

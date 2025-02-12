@@ -97,7 +97,8 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
   }
 
   void _showSnackBar(String message, {SnackBarType type = SnackBarType.info}) {
-    SnackbarHelper.showSnackBar(context, message, type: type , duration: Duration(seconds: 4));
+    SnackbarHelper.showSnackBar(context, message,
+        type: type, duration: const Duration(seconds: 5));
   }
 
   // ================ Image Handling ================
@@ -287,7 +288,9 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
     return null;
   }
 
-  Future<rekognition.IndexFacesResponse?> _indexFaces(String imagePath, String userName) async { String sanitizedName = userName.trim().replaceAll(' ', '_');
+  Future<rekognition.IndexFacesResponse?> _indexFaces(
+      String imagePath, String userName) async {
+    String sanitizedName = userName.trim().replaceAll(' ', '_');
     _setLoading(true);
 
     try {
@@ -350,8 +353,10 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
               employeeId.toString(), 'Face',
               attendanceType: selectedOption);
 
-          if (response != null) {
-            _showSnackBar(response, type: SnackBarType.success);
+          if (response['isSuccess'] == true) {
+            _showSnackBar(response['message'], type: SnackBarType.success);
+          } else {
+            _showSnackBar(response['message'], type: SnackBarType.error);
           }
         }
       } else {
@@ -412,8 +417,6 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
     }
   }
 
-
-
   bool _validateSelection() {
     // setState(() {
     if (selectedOption == null || selectedOption!.isEmpty) {
@@ -429,7 +432,7 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
     }
 
     validationMessage =
-    selectedOption == null ? "Please select at least one option." : null;
+        selectedOption == null ? "Please select at least one option." : null;
     // });
   }
 
@@ -614,7 +617,7 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
               child: Text(
                 validationMessage!,
                 style:
-                TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
               ),
             ),
           // SizedBox(height: 8.0),
@@ -636,17 +639,16 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
               onPressed: isActionInProgress
                   ? null // Disable button when action is in progress
                   : () {
-                final isSelected = _validateSelection();
-                if (!isSelected) {
-                  return;
-                }
-                if (_formKey.currentState!.validate()) {
-                  pickImage('search');
-                }
-                else{
-                  log('not validated');
-                }
-              },
+                      final isSelected = _validateSelection();
+                      if (!isSelected) {
+                        return;
+                      }
+                      if (_formKey.currentState!.validate()) {
+                        pickImage('search');
+                      } else {
+                        log('not validated');
+                      }
+                    },
               icon: const Icon(
                 Icons.search,
                 size: 20,

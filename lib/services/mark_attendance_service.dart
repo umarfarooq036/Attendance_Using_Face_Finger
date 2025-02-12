@@ -38,7 +38,7 @@ class MarkAttendanceService {
   MarkAttendanceService({http.Client? client})
       : _client = client ?? http.Client();
 
-  Future<String?> markAttendance(
+  Future markAttendance(
     String empId,
     String type, {
     String? image = '',
@@ -77,7 +77,7 @@ class MarkAttendanceService {
       }
 
       // Prepare the body for the request
-      var requestBody =  {
+      var requestBody = {
         "type": type,
         "employeeId": int.parse(empId),
         "locationId": locationId,
@@ -109,11 +109,20 @@ class MarkAttendanceService {
 
       // Check if response is successful
       if (responseData['isSuccess'] == true) {
-        return responseData['content']; // Return the content if successful
+        // return responseData['content']; // Return the content if successful
+
+        return {
+          'isSuccess': responseData['isSuccess'],
+          'message': responseData['content']
+        };
       }
 
       // Return error message if exists
-      return responseData['errorMessage'] ?? 'An unknown error occurred.';
+      // return responseData['errorMessage'] ?? 'An unknown error occurred.';
+      return {
+        'isSuccess': responseData['isSuccess'],
+        'message': responseData['errorMessage']
+      };
     } catch (e) {
       // Catch any other exceptions
       log('Error Marking Attendance: $e');

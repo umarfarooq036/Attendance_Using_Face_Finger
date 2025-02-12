@@ -235,7 +235,6 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
   final MarkAttendanceService _markAttendanceService = MarkAttendanceService();
   final FingerFaceApiService _apiService = FingerFaceApiService();
 
-
   String? validationMessage;
   String? selectedOption;
 
@@ -310,11 +309,10 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
       final response = await _markAttendanceService.markAttendance(
           empId.toString(), 'Manual',
           image: base64Image, attendanceType: selectedOption);
-      if (response != null) {
-        _showSnackBar(response, type: SnackBarType.info);
+      if (response['isSuccess'] == true) {
+        _showSnackBar(response['message'], type: SnackBarType.success);
       } else {
-        _showSnackBar('Unable to Mark Manual Attendance',
-            type: SnackBarType.error);
+        _showSnackBar(response['message'], type: SnackBarType.error);
       }
 
       setState(() {
@@ -329,7 +327,6 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
   void _showSnackBar(String message, {SnackBarType type = SnackBarType.info}) {
     SnackbarHelper.showSnackBar(context, message, type: type);
   }
-
 
   bool _validateSelection() {
     // setState(() {
@@ -346,7 +343,7 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
     }
 
     validationMessage =
-    selectedOption == null ? "Please select at least one option." : null;
+        selectedOption == null ? "Please select at least one option." : null;
     // });
   }
 
@@ -500,7 +497,7 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
               child: Text(
                 validationMessage!,
                 style:
-                TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
               ),
             ),
           // SizedBox(height: 8.0),

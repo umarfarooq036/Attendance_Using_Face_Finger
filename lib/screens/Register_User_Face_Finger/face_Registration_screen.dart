@@ -4,7 +4,6 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:aws_rekognition_api/rekognition-2016-06-27.dart' as rekognition;
 import 'package:aws_dynamodb_api/dynamodb-2012-08-10.dart';
