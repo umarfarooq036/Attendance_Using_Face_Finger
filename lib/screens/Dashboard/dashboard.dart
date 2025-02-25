@@ -1,557 +1,560 @@
-  import 'dart:convert';
-  import 'dart:developer';
-  import 'dart:io';
-  
-  import 'package:device_info_plus/device_info_plus.dart';
-  import 'package:flutter/material.dart';
-  import 'package:shimmer/shimmer.dart';
-  
-  import '../../firebase/fcm_service.dart';
-  import '../../models/device.dart';
-  import '../../services/device_registration_service.dart';
-  import '../../services/location_service.dart';
-  import '../../utils/sharedPreferencesHelper.dart';
-  import '../../utils/snackBar.dart';
-  import '../Mannual Registration/mannual_registration.dart';
-  import '../Register_User_Face_Finger/register_user.dart';
-  import '../face_attendance/face_authentication_screen.dart';
-  import '../finger_authentication/finger_auth_screen.dart';
-  
-  class Dashboard extends StatefulWidget {
-    static String routeName = '/dashboard';
-    const Dashboard({super.key});
-    @override
-    _DashboardState createState() => _DashboardState();
+import 'dart:convert';
+import 'dart:developer';
+import 'dart:io';
+
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
+
+import '../../firebase/fcm_service.dart';
+import '../../models/device.dart';
+import '../../services/device_registration_service.dart';
+import '../../services/location_service.dart';
+import '../../utils/sharedPreferencesHelper.dart';
+import '../../utils/snackBar.dart';
+import '../Mannual Registration/mannual_registration.dart';
+import '../Register_User_Face_Finger/register_user.dart';
+import '../face_attendance/face_authentication_screen.dart';
+import '../finger_authentication/finger_auth_screen.dart';
+
+class Dashboard extends StatefulWidget {
+  static String routeName = '/dashboard';
+  const Dashboard({super.key});
+  @override
+  _DashboardState createState() => _DashboardState();
+}
+
+class _DashboardState extends State<Dashboard> {
+  String? token;
+  final _fcmService = FCMService();
+  final _locationService = LocationService();
+  final _registrationService = DeviceRegistrationService();
+  Map<String, dynamic>? _locationData;
+  Map<String, dynamic> _locations = {};
+  String _selectedLocation = '';
+  int? _selectedLocationCode;
+  String deviceName = 'Unknown Device';
+  bool isRegistered = false;
+  bool _isRegisteringDevice = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeData();
   }
-  
-  class _DashboardState extends State<Dashboard> {
-    String? token;
-    final _fcmService = FCMService();
-    final _locationService = LocationService();
-    final _registrationService = DeviceRegistrationService();
-    Map<String, dynamic>? _locationData;
-    Map<String, dynamic> _locations = {};
-    String _selectedLocation = '';
-    int? _selectedLocationCode;
-    String deviceName = 'Unknown Device';
-    bool isRegistered = false;
-    bool _isRegisteringDevice = false;
-    bool _isLoading = true;
-  
-    @override
-    void initState() {
-      super.initState();
-      _initializeData();
-    }
-  
-    Future<void> _initializeData() async {
-      try {
-        // Show loading dialog
-        setState(() => _isLoading = true);
-  
-        // Step 1: Get device name
-        deviceName = await _getDeviceName();
-  
-        // Step 2: Get device token
-        token = await _fcmService.getDeviceToken();
-        if (token == null) throw Exception('Failed to get device token');
-  
-        // Step 3: Fetch locations
-        await _fetchLocations();
 
+  Future<void> _initializeData() async {
+    try {
+      // Show loading dialog
+      setState(() => _isLoading = true);
 
-        // Step 6: Load saved office location
-        await _loadSavedOfficeLocation();
+      // Step 1: Get device name
+      deviceName = await _getDeviceName();
 
+      // Step 2: Get device token
+      token = await _fcmService.getDeviceToken();
+      if (token == null) throw Exception('Failed to get device token');
 
-        // Step 4: Check device registration status
-        await _checkDeviceRegistration();
-  
-        // Step 5: Get current location
-        await _getCurrentLocation();
-  
+      // Step 3: Fetch locations
+      await _fetchLocations();
 
+      // Step 6: Load saved office location
+      await _loadSavedOfficeLocation();
 
-        // Step 7: Save necessary data to preferences
-        await _saveDataToPreferences();
-      } catch (e) {
-        log('Error initializing data: $e');
-        SnackbarHelper.showSnackBar(context, 'Error initializing app: $e',
-            type: SnackBarType.error);
-      } finally {
-        setState(() => _isLoading = false);
-      }
+      // Step 4: Check device registration status
+      await _checkDeviceRegistration();
+
+      // Step 5: Get current location
+      await _getCurrentLocation();
+
+      // Step 7: Save necessary data to preferences
+      await _saveDataToPreferences();
+    } catch (e) {
+      log('Error initializing data: $e');
+      SnackbarHelper.showSnackBar(context, 'Error initializing app: $e',
+          type: SnackBarType.error);
+    } finally {
+      setState(() => _isLoading = false);
     }
-  
-    Future<String> _getDeviceName() async {
-      final deviceInfo = DeviceInfoPlugin();
-      try {
-        if (Platform.isAndroid) {
-          final androidInfo = await deviceInfo.androidInfo;
-          return '${androidInfo.manufacturer} ${androidInfo.model}';
-        } else if (Platform.isIOS) {
-          final iosInfo = await deviceInfo.iosInfo;
-          return iosInfo.name ?? 'Unknown iOS Device';
-        }
-      } catch (e) {
-        log('Error getting device name: $e');
+  }
+
+  Future<String> _getDeviceName() async {
+    final deviceInfo = DeviceInfoPlugin();
+    try {
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        return '${androidInfo.manufacturer} ${androidInfo.model}';
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfo.iosInfo;
+        return iosInfo.name ?? 'Unknown iOS Device';
       }
-      return 'Unknown Device';
+    } catch (e) {
+      log('Error getting device name: $e');
     }
-  
-    Future<void> _fetchLocations() async {
-      try {
-        final locations = await _registrationService.getLocations();
-        log('Fetched locations: $locations'); // Add this debug line
-        setState(() => _locations = locations);
-      } catch (e) {
-        log('Error fetching locations: $e');
-        throw Exception('Failed to fetch locations: $e');
-      }
+    return 'Unknown Device';
+  }
+
+  Future<void> _fetchLocations() async {
+    try {
+      final locations = await _registrationService.getLocations();
+      log('Fetched locations: $locations'); // Add this debug line
+      setState(() => _locations = locations);
+    } catch (e) {
+      log('Error fetching locations: $e');
+      throw Exception('Failed to fetch locations: $e');
     }
-  
-    // Future<void> _checkDeviceRegistration() async {
-    //   try {
-    //     if (token != null) {
-    //       final Device? response =
-    //           await _registrationService.checkIsRegisteredFromServer(token!);
-    //       if (response != null) {
-    //         _selectedLocationCode = response.locationId;
-    //         isRegistered = true;
-    //         setState(() {
-    //
-    //         });
-    //       }
-    //       else{
-    //         _selectedLocationCode = null;
-    //         isRegistered = false;
-    //       }
-    //     }
-    //   } catch (e) {
-    //     log('Error checking device registration: $e');
-    //     throw Exception('Failed to check device registration: $e');
-    //   }
-    // }
-  
-    Future<void> _checkDeviceRegistration() async {
-      try {
-        if (token != null) {
-          final Device? response = await _registrationService.checkIsRegisteredFromServer(token!);
-  
-          setState(() {
-            if (response != null) {
-              _selectedLocationCode = response.locationId;
-  
-              // Find the location name (key) that matches the location code
-              _selectedLocation = _locations.entries
-                  .where((entry) => entry.value == _selectedLocationCode)
-                  .map((entry) => entry.key)
-                  .firstOrNull ?? '';
-  
-              isRegistered = true;
-              log('Selected location: $_selectedLocation, code: $_selectedLocationCode');
-            } else {
-              _selectedLocationCode = null;
-              _selectedLocation = '';
-              isRegistered = false;
-            }
-          });
-        }
-      } catch (e) {
-        log('Error checking device registration: $e');
-        throw Exception('Failed to check device registration: $e');
-      }
-    }
-  
-  
-  
-    Future<void> _getCurrentLocation() async {
-      try {
-        final location = await _locationService.getCurrentLocationAddress();
-        setState(() => _locationData = location);
-      } catch (e) {
-        log('Error getting current location: $e');
-        throw Exception('Failed to get current location: $e');
-      }
-    }
-  
-    Future<void> _loadSavedOfficeLocation() async {
-      try {
-        final String? data = await SharedPrefsHelper.getLocationData();
-        if (data != null) {
-          final Map<String, dynamic> savedLocations = json.decode(data);
-          setState(() {
-            if (savedLocations.isNotEmpty) {
-              final entry = savedLocations.entries.first;
-              _selectedLocation = entry.key;
-              _selectedLocationCode = entry.value;
-            }
-          });
-        }
-      } catch (e) {
-        log('Error loading saved location: $e');
-      }
-    }
-  
-    Future<void> _saveDataToPreferences() async {
-      try {
-        if (token != null) {
-          await SharedPrefsHelper.setDeviceToken(token!);
-          if (_locationData != null) {
-            final coordinates = _locationData!['coordinates'];
-            await SharedPrefsHelper.setLatitude(coordinates['latitude']);
-            await SharedPrefsHelper.setLongitude(coordinates['longitude']);
+  }
+
+  // Future<void> _checkDeviceRegistration() async {
+  //   try {
+  //     if (token != null) {
+  //       final Device? response =
+  //           await _registrationService.checkIsRegisteredFromServer(token!);
+  //       if (response != null) {
+  //         _selectedLocationCode = response.locationId;
+  //         isRegistered = true;
+  //         setState(() {
+  //
+  //         });
+  //       }
+  //       else{
+  //         _selectedLocationCode = null;
+  //         isRegistered = false;
+  //       }
+  //     }
+  //   } catch (e) {
+  //     log('Error checking device registration: $e');
+  //     throw Exception('Failed to check device registration: $e');
+  //   }
+  // }
+
+  Future<void> _checkDeviceRegistration() async {
+    try {
+      if (token != null) {
+        final Device? response =
+            await _registrationService.checkIsRegisteredFromServer(token!);
+
+        setState(() {
+          if (response != null) {
+            _selectedLocationCode = response.locationId;
+
+            // Find the location name (key) that matches the location code
+            _selectedLocation = _locations.entries
+                    .where((entry) => entry.value == _selectedLocationCode)
+                    .map((entry) => entry.key)
+                    .firstOrNull ??
+                '';
+
+            isRegistered = true;
+            log('Selected location: $_selectedLocation, code: $_selectedLocationCode');
+            updateLocationData();
+          } else {
+            _selectedLocationCode = null;
+            _selectedLocation = '';
+            isRegistered = false;
           }
+        });
+      }
+    } catch (e) {
+      log('Error checking device registration: $e');
+      throw Exception('Failed to check device registration: $e');
+    }
+  }
+
+  Future<void> updateLocationData() async {
+    await SharedPrefsHelper.clearValue("locationData");
+
+    final jsonString = json.encode({_selectedLocation: _selectedLocationCode});
+    await SharedPrefsHelper.setLocationData(jsonString);
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      final location = await _locationService.getCurrentLocationAddress();
+      setState(() => _locationData = location);
+    } catch (e) {
+      log('Error getting current location: $e');
+      throw Exception('Failed to get current location: $e');
+    }
+  }
+
+  Future<void> _loadSavedOfficeLocation() async {
+    try {
+      final String? data = await SharedPrefsHelper.getLocationData();
+      if (data != null) {
+        final Map<String, dynamic> savedLocations = json.decode(data);
+        setState(() {
+          if (savedLocations.isNotEmpty) {
+            final entry = savedLocations.entries.first;
+            _selectedLocation = entry.key;
+            _selectedLocationCode = entry.value;
+          }
+        });
+      }
+    } catch (e) {
+      log('Error loading saved location: $e');
+    }
+  }
+
+  Future<void> _saveDataToPreferences() async {
+    try {
+      if (token != null) {
+        await SharedPrefsHelper.setDeviceToken(token!);
+        if (_locationData != null) {
+          final coordinates = _locationData!['coordinates'];
+          await SharedPrefsHelper.setLatitude(coordinates['latitude']);
+          await SharedPrefsHelper.setLongitude(coordinates['longitude']);
         }
-      } catch (e) {
-        log('Error saving preferences: $e');
-        throw Exception('Failed to save preferences: $e');
       }
+    } catch (e) {
+      log('Error saving preferences: $e');
+      throw Exception('Failed to save preferences: $e');
     }
-  
-    Future<void> _registerOfficeDevice() async {
-      if (_selectedLocationCode == null) {
-        SnackbarHelper.showSnackBar(context, 'Please select a location',
-            type: SnackBarType.error);
-        return;
-      }
-  
-      setState(() => _isRegisteringDevice = true);
-      try {
-        final message = await _registrationService.registerOfficeDevice(
-            token!, _selectedLocationCode!, deviceName);
-  
-        SnackbarHelper.showSnackBar(
-            context, message ?? 'Device registered successfully',
-            type: SnackBarType.success);
-  
-        // Refresh registration status
-        await _checkDeviceRegistration();
-      } catch (e) {
-        log('Error registering device: $e');
-        SnackbarHelper.showSnackBar(context, 'Registration failed: $e',
-            type: SnackBarType.error);
-      } finally {
-        setState(() => _isRegisteringDevice = false);
-      }
+  }
+
+  Future<void> _registerOfficeDevice() async {
+    if (_selectedLocationCode == null) {
+      SnackbarHelper.showSnackBar(context, 'Please select a location',
+          type: SnackBarType.error);
+      return;
     }
-  
-    Future<void> _handleLocationChange(String? value) async {
-      if (value == null || isRegistered) return;
-  
-      setState(() {
-        _selectedLocation = value;
-        _selectedLocationCode = _locations[value];
-      });
-  
-      try {
-        final jsonString =
-            json.encode({_selectedLocation: _selectedLocationCode});
-        await SharedPrefsHelper.setLocationData(jsonString);
-      } catch (e) {
-        log('Error saving location change: $e');
-        SnackbarHelper.showSnackBar(context, 'Error saving location: $e',
-            type: SnackBarType.error);
-      }
+
+    setState(() => _isRegisteringDevice = true);
+    try {
+      final message = await _registrationService.registerOfficeDevice(
+          token!, _selectedLocationCode!, deviceName);
+
+      SnackbarHelper.showSnackBar(
+          context, message ?? 'Device registered successfully',
+          type: SnackBarType.success);
+
+      // Refresh registration status
+      await _checkDeviceRegistration();
+    } catch (e) {
+      log('Error registering device: $e');
+      SnackbarHelper.showSnackBar(context, 'Registration failed: $e',
+          type: SnackBarType.error);
+    } finally {
+      setState(() => _isRegisteringDevice = false);
     }
-  
-    @override
-    Widget build(BuildContext context) {
-      final screenWidth = MediaQuery.of(context).size.width;
-      final screenHeight = MediaQuery.of(context).size.height;
-  
-      if (_isLoading) {
-        return Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFF17a2b8),
-            ),
-          ),
-        );
-      }
-  
+  }
+
+  Future<void> _handleLocationChange(String? value) async {
+    if (value == null || isRegistered) return;
+
+    setState(() {
+      _selectedLocation = value;
+      _selectedLocationCode = _locations[value];
+    });
+
+    try {
+      final jsonString =
+          json.encode({_selectedLocation: _selectedLocationCode});
+      await SharedPrefsHelper.setLocationData(jsonString);
+    } catch (e) {
+      log('Error saving location change: $e');
+      SnackbarHelper.showSnackBar(context, 'Error saving location: $e',
+          type: SnackBarType.error);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(
-          centerTitle: true,
-          title: const Text(
-            'PBI Attendance',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: const Color(0xFF17a2b8),
-          elevation: 0,
-        ),
-        body: Container(
-          height: screenHeight,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFE0F7FA), Color(0xFF80DEEA)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.02,
-              vertical: screenHeight * 0.02,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildMainCard(screenWidth, screenHeight),
-              ],
-            ),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF17a2b8),
           ),
         ),
       );
     }
-  
-    Widget _buildMainCard(double screenWidth, double screenHeight) {
-      return Card(
-        elevation: 10,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+
+    return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text(
+          'PBI Attendance',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        child: Padding(
-          padding: EdgeInsets.all(screenWidth * 0.05),
+        backgroundColor: const Color(0xFF17a2b8),
+        elevation: 0,
+      ),
+      body: Container(
+        height: screenHeight,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFE0F7FA), Color(0xFF80DEEA)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.02,
+            vertical: screenHeight * 0.02,
+          ),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLocationRow(screenWidth),
-              SizedBox(height: screenHeight * 0.02),
-              _buildAttendanceOptions(screenWidth, screenHeight),
+              _buildMainCard(screenWidth, screenHeight),
             ],
           ),
         ),
-      );
-    }
-  
-    Widget _buildLocationRow(double screenWidth) {
-      return Row(
-        children: [
-          Expanded(
-            flex: 4,
-            child: _buildLocationDropdown(screenWidth),
-          ),
-          SizedBox(width: screenWidth * 0.02),
-          Expanded(
-            flex: 1,
-            child: _buildRegistrationButton(screenWidth),
-          ),
-        ],
-      );
-    }
-  
-    Widget _buildLocationDropdown(double screenWidth) {
-      if (_locations.isEmpty) {
-        return Center(
-          child: Shimmer.fromColors(
-            baseColor: Colors.grey[300]!,
-            highlightColor: Colors.grey[100]!,
-            child: const Text(
-              'Loading...',
-              style: TextStyle(
-                fontSize: 28.0,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        );
-      }
-  
-      return SizedBox(
-        height: 45,
-        // child: DropdownButtonFormField<String>(
-        //   decoration: InputDecoration(
-        //     labelText: 'Select Location',
-        //     border: OutlineInputBorder(
-        //       borderRadius: BorderRadius.circular(15),
-        //     ),
-        //     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        //   ),
-        //   value: _selectedLocation.isEmpty ? null : _selectedLocation,
-        //   items: _locations.keys.map((locationName) {
-        //     return DropdownMenuItem<String>(
-        //       value: locationName,
-        //       child: Container(
-        //         width: screenWidth * 0.7, // Adjust this value as needed
-        //         child: Text(
-        //           locationName,
-        //           maxLines: 1,
-        //           overflow: TextOverflow.ellipsis,
-        //           style: TextStyle(
-        //             fontSize: screenWidth * 0.035,
-        //           ),
-        //         ),
-        //       ),
-        //     );
-        //   }).toList(),
-        //   onChanged: isRegistered
-        //       ? null
-        //       : _handleLocationChange, // Disable onChanged if registered
-        //   isExpanded: true,
-        //   menuMaxHeight: 300, // Set maximum height for dropdown menu
-        //   alignment: AlignmentDirectional.centerStart,
-        // ),
-  
-        child: DropdownButtonFormField<String>(
-          decoration: InputDecoration(
-            labelText: 'Select Location',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
-          value: _selectedLocation.isNotEmpty ? _selectedLocation : null,
-          items: [
-            DropdownMenuItem<String>(
-              value: '',
-              child: Text('Please select a location',
-                  style: TextStyle(color: Colors.grey)),
-            ),
-            ..._locations.keys.map((locationName) {
-              return DropdownMenuItem<String>(
-                value: locationName,
-                child: Text(
-                  locationName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 14),
-                ),
-              );
-            }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildMainCard(double screenWidth, double screenHeight) {
+    return Card(
+      elevation: 10,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(screenWidth * 0.05),
+        child: Column(
+          children: [
+            _buildLocationRow(screenWidth),
+            SizedBox(height: screenHeight * 0.02),
+            _buildAttendanceOptions(screenWidth, screenHeight),
           ],
-          onChanged: isRegistered
-              ? null
-              : (String? newValue) {
-            if (newValue != null) {
-              setState(() {
-                _selectedLocation = newValue;
-                _selectedLocationCode = _locations[newValue];
-                log('Location changed to: $_selectedLocation (code: $_selectedLocationCode)');
-              });
-            }
-          },
-          isExpanded: true,
-          menuMaxHeight: 300,
-          alignment: AlignmentDirectional.centerStart,
         ),
-  
-  
+      ),
+    );
+  }
+
+  Widget _buildLocationRow(double screenWidth) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 4,
+          child: _buildLocationDropdown(screenWidth),
+        ),
+        SizedBox(width: screenWidth * 0.02),
+        Expanded(
+          flex: 1,
+          child: _buildRegistrationButton(screenWidth),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocationDropdown(double screenWidth) {
+    if (_locations.isEmpty) {
+      return Center(
+        child: Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: const Text(
+            'Loading...',
+            style: TextStyle(
+              fontSize: 28.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
       );
     }
-  
-    Widget _buildRegistrationButton(double screenWidth) {
-      return InkWell(
-        onTap: _registerOfficeDevice,
-        child: Container(
-          padding: EdgeInsets.all(screenWidth * 0.02),
-          decoration: BoxDecoration(
-            color: const Color(0xFF17a2b8),
+
+    return SizedBox(
+      height: 45,
+      // child: DropdownButtonFormField<String>(
+      //   decoration: InputDecoration(
+      //     labelText: 'Select Location',
+      //     border: OutlineInputBorder(
+      //       borderRadius: BorderRadius.circular(15),
+      //     ),
+      //     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      //   ),
+      //   value: _selectedLocation.isEmpty ? null : _selectedLocation,
+      //   items: _locations.keys.map((locationName) {
+      //     return DropdownMenuItem<String>(
+      //       value: locationName,
+      //       child: Container(
+      //         width: screenWidth * 0.7, // Adjust this value as needed
+      //         child: Text(
+      //           locationName,
+      //           maxLines: 1,
+      //           overflow: TextOverflow.ellipsis,
+      //           style: TextStyle(
+      //             fontSize: screenWidth * 0.035,
+      //           ),
+      //         ),
+      //       ),
+      //     );
+      //   }).toList(),
+      //   onChanged: isRegistered
+      //       ? null
+      //       : _handleLocationChange, // Disable onChanged if registered
+      //   isExpanded: true,
+      //   menuMaxHeight: 300, // Set maximum height for dropdown menu
+      //   alignment: AlignmentDirectional.centerStart,
+      // ),
+
+      child: DropdownButtonFormField<String>(
+        decoration: InputDecoration(
+          labelText: 'Select Location',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        ),
+        value: _selectedLocation.isNotEmpty ? _selectedLocation : null,
+        items: [
+          DropdownMenuItem<String>(
+            value: '',
+            child: Text('Please select a location',
+                style: TextStyle(color: Colors.grey)),
+          ),
+          ..._locations.keys.map((locationName) {
+            return DropdownMenuItem<String>(
+              value: locationName,
+              child: Text(
+                locationName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 14),
+              ),
+            );
+          }).toList(),
+        ],
+        onChanged: isRegistered
+            ? null
+            : (String? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    _selectedLocation = newValue;
+                    _selectedLocationCode = _locations[newValue];
+                    log('Location changed to: $_selectedLocation (code: $_selectedLocationCode)');
+                  });
+                }
+              },
+        isExpanded: true,
+        menuMaxHeight: 300,
+        alignment: AlignmentDirectional.centerStart,
+      ),
+    );
+  }
+
+  Widget _buildRegistrationButton(double screenWidth) {
+    return InkWell(
+      onTap: _registerOfficeDevice,
+      child: Container(
+        padding: EdgeInsets.all(screenWidth * 0.02),
+        decoration: BoxDecoration(
+          color: const Color(0xFF17a2b8),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: _isRegisteringDevice
+            ? SizedBox(
+                width: screenWidth * 0.05,
+                height: screenWidth * 0.05,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Icon(
+                Icons.app_registration,
+                color: Colors.white,
+                size: screenWidth * 0.06,
+              ),
+      ),
+    );
+  }
+
+  Widget _buildAttendanceOptions(double screenWidth, double screenHeight) {
+    final attendanceOptions = [
+      {
+        'text': 'Register User',
+        'route': RegistrationScreen.routeName,
+        'icon': Icons.person_add_alt,
+      },
+      {
+        'text': 'Manual Attendance',
+        'route': ManualAttendanceScreen.routeName,
+        'icon': Icons.assignment_ind,
+      },
+      {
+        'text': 'Face Attendance',
+        'route': FaceRecognitionScreen.routeName,
+        'icon': Icons.face,
+      },
+      {
+        'text': 'Finger Attendance',
+        'route': FingerprintScannerScreen.routeName,
+        'icon': Icons.fingerprint,
+      },
+    ];
+
+    return Wrap(
+      spacing: screenWidth * 0.03,
+      runSpacing: screenHeight * 0.02,
+      alignment: WrapAlignment.center,
+      children: attendanceOptions.map((option) {
+        return _buildResponsiveButton(
+          context,
+          text: option['text'] as String,
+          onPressed: () {
+            Navigator.pushNamed(context, option['route'] as String)
+                .then((value) {
+              _initializeData();
+            });
+          },
+          color: const Color(0xFF17a2b8),
+          icon: Icon(option['icon'] as IconData),
+          width: screenWidth * 0.4,
+          loader: false,
+          isDisabled: !isRegistered,
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildResponsiveButton(
+    BuildContext context, {
+    required String text,
+    required VoidCallback onPressed,
+    required Color color,
+    required Icon icon,
+    double? width,
+    required bool loader,
+    required bool isDisabled,
+  }) {
+    return SizedBox(
+      width: width ?? MediaQuery.of(context).size.width * 0.4,
+      child: ElevatedButton.icon(
+        onPressed: isDisabled ? null : onPressed,
+        icon: loader ? SizedBox.shrink() : icon,
+        label: FittedBox(
+          child: loader
+              ? CircularProgressIndicator(color: Color(0xFF17a2b8))
+              : Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+        ),
+        style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.white,
+          backgroundColor: loader
+              ? Colors.grey
+              : isDisabled
+                  ? Colors.grey.withOpacity(0.6)
+                  : color,
+          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          child: _isRegisteringDevice
-              ? SizedBox(
-                  width: screenWidth * 0.05,
-                  height: screenWidth * 0.05,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-              : Icon(
-                  Icons.app_registration,
-                  color: Colors.white,
-                  size: screenWidth * 0.06,
-                ),
         ),
-      );
-    }
-  
-    Widget _buildAttendanceOptions(double screenWidth, double screenHeight) {
-      final attendanceOptions = [
-        {
-          'text': 'Register User',
-          'route': RegistrationScreen.routeName,
-          'icon': Icons.person_add_alt,
-        },
-        {
-          'text': 'Manual Attendance',
-          'route': ManualAttendanceScreen.routeName,
-          'icon': Icons.assignment_ind,
-        },
-        {
-          'text': 'Face Attendance',
-          'route': FaceRecognitionScreen.routeName,
-          'icon': Icons.face,
-        },
-        {
-          'text': 'Finger Attendance',
-          'route': FingerprintScannerScreen.routeName,
-          'icon': Icons.fingerprint,
-        },
-      ];
-  
-      return Wrap(
-        spacing: screenWidth * 0.03,
-        runSpacing: screenHeight * 0.02,
-        alignment: WrapAlignment.center,
-        children: attendanceOptions.map((option) {
-          return _buildResponsiveButton(
-            context,
-            text: option['text'] as String,
-            onPressed: () {
-              Navigator.pushNamed(context, option['route'] as String).then((value){
-                _initializeData();
-              });
-            },
-            color: const Color(0xFF17a2b8),
-            icon: Icon(option['icon'] as IconData),
-            width: screenWidth * 0.4,
-            loader: false,
-            isDisabled: !isRegistered,
-          );
-        }).toList(),
-      );
-    }
-  
-    Widget _buildResponsiveButton(
-      BuildContext context, {
-      required String text,
-      required VoidCallback onPressed,
-      required Color color,
-      required Icon icon,
-      double? width,
-      required bool loader,
-      required bool isDisabled,
-    }) {
-      return SizedBox(
-        width: width ?? MediaQuery.of(context).size.width * 0.4,
-        child: ElevatedButton.icon(
-          onPressed: isDisabled ? null : onPressed,
-          icon: loader ? SizedBox.shrink() : icon,
-          label: FittedBox(
-            child: loader
-                ? CircularProgressIndicator(color: Color(0xFF17a2b8))
-                : Text(
-                    text,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-          ),
-          style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor: loader
-                ? Colors.grey
-                : isDisabled
-                    ? Colors.grey.withOpacity(0.6)
-                    : color,
-            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ),
-      );
-    }
+      ),
+    );
   }
+}
